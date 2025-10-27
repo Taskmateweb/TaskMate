@@ -85,24 +85,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   let timerInterval = null;
   let timerRemaining = 0;
 
-  // --- Helpers: storage ---
-  function saveToStorage(key, data) {
-    try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){ console.warn('Storage error', e); }
-  }
-  function loadFromStorage(key) {
-    try {
-      const s = localStorage.getItem(key);
-      return s ? JSON.parse(s) : null;
-    } catch(e) {
-      console.warn('Storage parse error', e);
-      return null;
-    }
-  }
-
-  // Save state convenience
-  function saveAll() {
-    saveToStorage(TASKS_KEY, tasks);
-    saveToStorage(LISTS_KEY, lists);
+  // Save state to Firebase
+  async function saveAll() {
+    // Firebase auto-saves on create/update/delete, no need for manual save
+    console.log('Data synced with Firebase');
   }
 
 
@@ -213,10 +199,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTasks(listName, topSearch ? topSearch.value : '');
   }
 
-  // --- Save when tasks or lists change ---
-  function persist() {
-    saveToStorage(TASKS_KEY, tasks);
-    saveToStorage(LISTS_KEY, lists);
+  // --- Save when tasks or lists change (Firebase auto-saves) ---
+  async function persist() {
+    // Firebase automatically saves on create/update/delete
+    console.log('Changes synced with Firebase');
   }
 
   // --- Add Task modal open/close with smooth animation ---
@@ -260,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (addTaskForm) {
-    addTaskForm.addEventListener('submit', (e) => {
+    addTaskForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = (newTaskTitle && newTaskTitle.value.trim()) || 'Untitled';
       let list = newTaskListSelect ? newTaskListSelect.value : (newTaskListOther ? newTaskListOther.value.trim() : 'General');
@@ -270,21 +256,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       const priority = (newTaskPriority && newTaskPriority.value) || 'Medium';
       const description = (newTaskDescription && newTaskDescription.value.trim()) || '';
 
-      // If new list entered and not already exist, add to lists and persist
+      // If new list entered and not already exist, add to lists
       if (list && !lists.includes(list)) {
         lists.unshift(list);
-        saveToStorage(LISTS_KEY, lists);
+        try {
+          await listsService.addList(list);
+        } catch (error) {
+          console.error('Error adding list:', error);
+        }
         populateListSelect();
         renderLists();
       }
 
-      const newTask = { id: Date.now(), title, list, due, priority, status: 'To Do', description };
-      tasks.unshift(newTask);
-      saveToStorage(TASKS_KEY, tasks);
-      renderTasks();
-      closeAddTaskModal();
-      addTaskForm.reset();
-      console.log('Task added:', newTask);
+      try {
+        const newTask = await tasksService.addTask({ 
+          title, 
+          list, 
+          due, 
+          priority, 
+          status: 'To Do', 
+          description 
+        });
+        tasks.unshift(newTask);
+        renderTasks();
+        closeAddTaskModal();
+        addTaskForm.reset();
+        console.log('Task added:', newTask);
+      } catch (error) {
+        console.error('Error adding task:', error);
+        alert('Failed to add task. Please try again.');
+      }
     });
   }
 
@@ -360,27 +361,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --- Task actions ---
-  function toggleStatus(id) {
+  async function toggleStatus(id) {
     const t = tasks.find(x => x.id === id);
     if (!t) return;
-    t.status = t.status === 'To Do' ? 'In Progress' : t.status === 'In Progress' ? 'Done' : 'To Do';
-    saveToStorage(TASKS_KEY, tasks);
-    renderTasks();
+    const newStatus = t.status === 'To Do' ? 'In Progress' : t.status === 'In Progress' ? 'Done' : 'To Do';
+    
+    try {
+      await tasksService.updateTask(id, { status: newStatus });
+      t.status = newStatus;
+      renderTasks();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update task status');
+    }
   }
 
-  function markComplete(id) {
+  async function markComplete(id) {
     const t = tasks.find(x => x.id === id);
     if (!t) return;
-    t.status = 'Done';
-    saveToStorage(TASKS_KEY, tasks);
-    renderTasks();
+    
+    try {
+      await tasksService.updateTask(id, { status: 'Done' });
+      t.status = 'Done';
+      renderTasks();
+    } catch (error) {
+      console.error('Error marking complete:', error);
+      alert('Failed to mark task as complete');
+    }
   }
 
-  function deleteTask(id) {
+  async function deleteTask(id) {
     if (!confirm('Are you sure you want to delete this task?')) return;
-    tasks = tasks.filter(x => x.id !== id);
-    saveToStorage(TASKS_KEY, tasks);
-    renderTasks();
+    
+    try {
+      await tasksService.deleteTask(id);
+      tasks = tasks.filter(x => x.id !== id);
+      renderTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      alert('Failed to delete task');
+    }
   }
 
   // --- Edit modal behaviour (reuse existing edit modal) ---
@@ -406,18 +426,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   if (editForm) {
-    editForm.addEventListener('submit', (e) => {
+    editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const id = Number(editTaskId.value);
+      const id = editTaskId.value; // Keep as string since Firestore IDs are strings
       const t = tasks.find(x => x.id === id);
       if (!t) return;
-      t.title = editTitle.value.trim();
-      t.list = editList.value.trim() || t.list;
-      t.due = editDue.value.trim() || t.due;
-      t.priority = editPriority.value;
-      saveToStorage(TASKS_KEY, tasks);
-      renderTasks();
-      if (editModal) { editModal.classList.add('hidden'); editModal.classList.remove('flex'); }
+      
+      const updates = {
+        title: editTitle.value.trim(),
+        list: editList.value.trim() || t.list,
+        due: editDue.value.trim() || t.due,
+        priority: editPriority.value
+      };
+      
+      try {
+        await tasksService.updateTask(id, updates);
+        Object.assign(t, updates);
+        renderTasks();
+        if (editModal) { editModal.classList.add('hidden'); editModal.classList.remove('flex'); }
+      } catch (error) {
+        console.error('Error updating task:', error);
+        alert('Failed to update task');
+      }
     });
   }
   if (closeEditModal) closeEditModal.addEventListener('click', () => { if (editModal) { editModal.classList.add('hidden'); editModal.classList.remove('flex'); } });
