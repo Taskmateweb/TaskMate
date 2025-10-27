@@ -10,20 +10,22 @@
 // 7. Copy the firebaseConfig object
 // 8. Replace the config below with your actual Firebase credentials
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-// Initialize Firebase
+// Import Firebase modules from CDN (for browser compatibility)
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDzEddcGQNg5m7-R61r6P1eAefayiCXxdY",
+  authDomain: "taskmate-92c2b.firebaseapp.com",
+  projectId: "taskmate-92c2b",
+  storageBucket: "taskmate-92c2b.firebasestorage.app",
+  messagingSenderId: "155458411749",
+  appId: "1:155458411749:web:e44e1ebe9c07c338f4c80c"
+};
+
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
