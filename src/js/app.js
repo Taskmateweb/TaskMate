@@ -2,6 +2,19 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('TaskMate app.js loaded');
 
+  // --- CHECK AUTHENTICATION ---
+  const currentUser = window.checkAuth ? window.checkAuth() : null;
+  if (!currentUser) {
+    // User not authenticated, redirect handled by checkAuth
+    return;
+  }
+
+  // Update user name in greeting
+  const userNameEl = document.getElementById('userName');
+  if (userNameEl && currentUser.name) {
+    userNameEl.textContent = currentUser.name.split(' ')[0]; // First name only
+  }
+
   // --- STORAGE KEYS ---
   const TASKS_KEY = 'taskmate_tasks_v1';
   const LISTS_KEY = 'taskmate_lists_v1';
