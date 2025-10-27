@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TaskMate — Dashboard</title>
+  <link rel="stylesheet" href="src/css/style.css" />
+  <style>
+    .row-actions { transition: opacity .15s ease-in-out, transform .15s ease; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+  <!-- Top Nav (sticky) -->
+  <header class="sticky top-0 z-40 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-8">
+          <div class="flex items-center space-x-3">
+            <img src="src/img/logo.png" alt="TaskMate" class="h-8 w-auto" />
+            <span class="font-semibold text-lg">TaskMate</span>
+          </div>
+
+          <nav class="hidden md:flex items-center space-x-4 text-sm text-gray-600">
+            <a href="#" class="hover:text-gray-900">Journal</a>
+            <a href="#" class="hover:text-gray-900">Inbox</a>
+            <a href="#" class="hover:text-gray-900">Calendar</a>
+            <a href="#" class="hover:text-gray-900">Reports</a>
+          </nav>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <div class="relative">
+            <input id="topSearch" type="search" placeholder="Search"
+              class="px-3 py-2 pl-10 rounded-lg border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 110-16 8 8 0 010 16z"/></svg>
+          </div>
+
+          <button id="notificationsBtn" class="p-2 rounded-md hover:bg-gray-100">
+            <svg class="w-5 h-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          </button>
+
+          <!-- Profile dropdown -->
+          <div class="relative" id="profileWrap">
+            <button id="profileBtn"
+                    class="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 focus:outline-none"
+                    aria-expanded="false" aria-controls="profileMenu">
+              <img src="src/img/avatar.jpg" alt="avatar" class="h-8 w-8 rounded-full object-cover" />
+            </button>
+
+            <div id="profileMenu"
+                 class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 text-sm z-50
+                        opacity-0 scale-95 pointer-events-none transform transition-all"
+                 role="menu" aria-hidden="true">
+              <a href="#" class="block px-4 py-2 hover:bg-gray-100" role="menuitem">Profile</a>
+              <a href="#" class="block px-4 py-2 hover:bg-gray-100" role="menuitem">Settings</a>
+              <div class="border-t border-gray-100 my-1"></div>
+              <button id="logoutBtn" class="w-full text-left px-4 py-2 hover:bg-gray-100" role="menuitem">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main layout: sidebar + content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-[220px_1fr] gap-8">
+
+      <!-- LEFT: Sidebar Lists -->
+      <aside class="col-start-1">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sticky top-24">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">My Lists</h3>
+          <ul id="listContainer" class="space-y-1 text-sm text-gray-600">
+            <!-- JS will populate lists here -->
+          </ul>
+        </div>
+      </aside>
+
+      <!-- RIGHT: Main content -->
+      <main class="col-start-2 space-y-6">
+
+        <!-- Greeting + Focus Session -->
+        <div class="space-y-4">
+          <div>
+            <h2 class="text-2xl font-extrabold">Hello, <span id="userName">Jannat</span></h2>
+            <p class="text-sm text-gray-500 mt-1">Welcome back — here's your dashboard.</p>
+          </div>
+
+          <!-- Focus Session card (entire card clickable) -->
+          <div id="focusCard" class="bg-white rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 border border-gray-100 shadow-sm cursor-pointer transition hover:shadow-md hover:scale-[1.02] active:scale-[0.98]">
+            <img src="src/img/hero-illustration.png" alt="focus" class="w-40 h-24 object-cover rounded-md" />
+            <div class="flex-1 text-center sm:text-left">
+              <h3 class="font-semibold text-gray-800">Start a Focus Session</h3>
+              <p class="text-sm text-gray-500">Choose a task and set a timer to minimize distractions. Boost your productivity with focused work intervals.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks Table -->
+        <section class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">My Tasks</h3>
+
+            <div class="flex items-center gap-3">
+              <label class="text-sm text-gray-600">Sort:</label>
+              <select id="sortSelect" class="px-2 py-1 border rounded text-sm">
+                <option value="default">Default</option>
+                <option value="due-asc">Due Date ↑</option>
+                <option value="due-desc">Due Date ↓</option>
+                <option value="priority-asc">Priority ↑</option>
+                <option value="priority-desc">Priority ↓</option>
+              </select>
+
+              <button id="addTaskBtn" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">+ Add Task</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full table-auto">
+              <thead>
+                <tr class="text-left text-sm text-gray-500 border-b">
+                  <th class="py-3 px-3">Task</th>
+                  <th class="py-3 px-3">List</th>
+                  <th class="py-3 px-3">Due Date</th>
+                  <th class="py-3 px-3">Priority</th>
+                  <th class="py-3 px-3">Status</th>
+                  <th class="py-3 px-3"> </th>
+                </tr>
+              </thead>
+              <tbody id="tasksTbody" class="text-sm"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Focus Modal -->
+  <div id="focusModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-xl w-11/12 max-w-md p-6 shadow-lg">
+      <h4 class="font-semibold text-lg mb-3">Start Focus Session</h4>
+      <div class="space-y-3">
+        <label class="block text-sm text-gray-600">Select Task</label>
+        <select id="focusTaskSelect" class="w-full border px-3 py-2 rounded text-sm"></select>
+
+        <label class="block text-sm text-gray-600">Duration (minutes)</label>
+        <input id="focusMinutes" type="number" value="25" min="5" max="180" class="w-full border px-3 py-2 rounded text-sm" />
+
+        <div class="flex items-center justify-between mt-4">
+          <div id="focusTimerDisplay" class="text-sm text-gray-700">Not started</div>
+          <div class="flex gap-2">
+            <button id="stopFocusBtn" class="px-3 py-1 bg-red-500 text-white rounded text-sm hidden">Stop</button>
+            <button id="startFocusBtn" class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Start</button>
+            <button id="closeFocusModal" class="px-3 py-1 border rounded text-sm">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Task Modal -->
+  <div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-xl w-11/12 max-w-lg p-6 shadow-lg">
+      <h4 class="font-semibold text-lg mb-3">Edit Task</h4>
+      <form id="editForm" class="space-y-3">
+        <input type="hidden" id="editTaskId" />
+        <div>
+          <label class="block text-sm text-gray-600">Task Title</label>
+          <input id="editTitle" class="w-full border px-3 py-2 rounded text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600">List</label>
+          <input id="editList" class="w-full border px-3 py-2 rounded text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm text-gray-600">Due Date</label>
+            <input id="editDue" class="w-full border px-3 py-2 rounded text-sm" placeholder="Tomorrow / Next Week / Today" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-600">Priority</label>
+            <select id="editPriority" class="w-full border px-3 py-2 rounded text-sm">
+              <option>Low</option><option>Medium</option><option>High</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button type="button" id="closeEditModal" class="px-3 py-1 border rounded text-sm">Cancel</button>
+          <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Task Modal (with List dropdown + Other) -->
+  <div id="addTaskModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div id="addTaskContent" class="bg-white rounded-2xl w-11/12 max-w-lg p-6 shadow-2xl transform scale-95 opacity-0 transition-all duration-300">
+      <h3 class="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800">
+        <span class="text-blue-600">+</span> Add New Task
+      </h3>
+
+      <form id="addTaskForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Task Title</label>
+          <input id="newTaskTitle" type="text" placeholder="e.g., Finish OS Lab Report" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" required />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">List</label>
+          <!-- select populated by JS -->
+          <div class="flex gap-2">
+            <select id="newTaskListSelect" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"></select>
+            <input id="newTaskListOther" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm hidden" placeholder="Enter new list name" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">Due Date</label>
+            <input id="newTaskDue" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">Priority</label>
+            <select id="newTaskPriority" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+              <option>Low</option>
+              <option>Medium</option>
+              <option>High</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Description</label>
+          <textarea id="newTaskDescription" placeholder="Add short details..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm h-24"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <button type="button" id="cancelAddTask" class="px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Add Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Task Details Modal -->
+  <div id="taskDetailsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-xl w-11/12 max-w-md p-6 shadow-lg">
+      <div class="flex justify-between items-start mb-4">
+        <h3 id="detailTitle" class="text-xl font-semibold"></h3>
+        <button id="closeDetail" class="text-gray-500 hover:text-gray-700">✖</button>
+      </div>
+      <p id="detailDesc" class="text-gray-700 mb-4"></p>
+      <div class="text-sm text-gray-600 space-y-1">
+        <div><strong>List:</strong> <span id="detailList"></span></div>
+        <div><strong>Due:</strong> <span id="detailDue"></span></div>
+        <div><strong>Priority:</strong> <span id="detailPriority"></span></div>
+        <div><strong>Status:</strong> <span id="detailStatus"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="src/js/app.js"></script>
+</body>
+</html>

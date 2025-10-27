@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Terms of Service — TaskMate</title>
+  <link rel="stylesheet" href="./src/css/style.css">
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+  <header class="bg-white border-b">
+    <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3">
+        <img src="src/img/logo.png" alt="TaskMate" class="w-10 h-10 object-contain">
+        <span class="font-bold text-lg">TaskMate</span>
+      </a>
+      <nav class="space-x-6 text-gray-700">
+        <a href="index.html" class="hover:text-blue-600">Home</a>
+        <a href="about.html" class="hover:text-blue-600">About</a>
+        <a href="contact.html" class="hover:text-blue-600">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-16">
+    <h1 class="text-3xl font-extrabold mb-4">Terms of Service</h1>
+
+    <section class="prose max-w-none text-gray-700">
+      <p>Last updated: <strong>October 2025</strong></p>
+
+      <h2>1. Acceptance</h2>
+      <p>By accessing or using TaskMate, you agree to these Terms. If you do not agree, do not use the service.</p>
+
+      <h2>2. Use of Service</h2>
+      <p>You must use the service in compliance with all applicable laws. You are responsible for your account security.</p>
+
+      <h2>3. Intellectual Property</h2>
+      <p>TaskMate retains all rights to the service and its content. You may not copy or republish without permission.</p>
+
+      <h2>4. Limitation of Liability</h2>
+      <p>To the maximum extent permitted by law, TaskMate is not liable for indirect, incidental, or consequential damages.</p>
+
+      <h2>5. Contact</h2>
+      <p>For questions about these terms, contact <a href="mailto:legal@taskmate.example" class="text-blue-600">legal@taskmate.example</a>.</p>
+    </section>
+  </main>
+
+  <footer class="border-t">
+    <div class="max-w-6xl mx-auto px-6 py-6 text-sm text-gray-600 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div>© <span id="year4"></span> TaskMate. All rights reserved.</div>
+      <div class="space-x-4">
+        <a href="privacy.html" class="hover:text-blue-600">Privacy Policy</a>
+        <a href="terms.html" class="hover:text-blue-600">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year4').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

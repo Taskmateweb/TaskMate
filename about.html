@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>About Us — TaskMate</title>
+  <link rel="stylesheet" href="./src/css/style.css">
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+  <!-- Header -->
+  <header class="bg-white border-b">
+    <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3">
+        <img src="src/img/logo.png" alt="TaskMate" class="w-10 h-10 object-contain">
+        <span class="font-bold text-lg">TaskMate</span>
+      </a>
+      <nav class="space-x-6 text-gray-700">
+        <a href="index.html" class="hover:text-blue-600">Home</a>
+        <a href="about.html" class="font-semibold text-blue-600">About</a>
+        <a href="contact.html" class="hover:text-blue-600">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main class="max-w-6xl mx-auto px-6 py-16">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-4">About TaskMate</h1>
+        <p class="text-gray-700 mb-6 text-lg">
+          TaskMate was built to help you organize tasks, focus on what matters, and collaborate with your team. We combine a clean UI with thoughtful features like focus sessions, progress tracking, and simple task management.
+        </p>
+
+        <h3 class="text-xl font-semibold mt-6 mb-2">Our mission</h3>
+        <p class="text-gray-700 mb-4">
+          To empower people and teams to get more meaningful work done with less friction — one focused session at a time.
+        </p>
+
+        <h3 class="text-xl font-semibold mt-4 mb-2">Core values</h3>
+        <ul class="list-disc list-inside text-gray-700 space-y-2">
+          <li>Clarity — keep things simple and focused</li>
+          <li>Reliability — build tools you can trust</li>
+          <li>Respect — help users protect their time and attention</li>
+        </ul>
+      </div>
+
+      <div class="bg-gray-50 rounded-xl p-8 shadow-sm">
+        <h4 class="text-lg font-semibold mb-3">Who is TaskMate for?</h4>
+        <p class="text-gray-700 mb-4">
+          Students, developers, professionals, and small teams who want a lightweight workflow to track tasks and protect focused time.
+        </p>
+
+        <h4 class="text-lg font-semibold mb-3">Get involved</h4>
+        <p class="text-gray-700 mb-4">
+          Feedback helps us grow. Use the contact page to share suggestions, report bugs, or request features.
+        </p>
+        <a href="contact.html" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">Contact us</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t">
+    <div class="max-w-6xl mx-auto px-6 py-6 text-sm text-gray-600 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div>© <span id="year"></span> TaskMate. All rights reserved.</div>
+      <div class="space-x-4">
+        <a href="privacy.html" class="hover:text-blue-600">Privacy Policy</a>
+        <a href="terms.html" class="hover:text-blue-600">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
