@@ -22,6 +22,7 @@
     "caniuse-lite": "^1.0.30001749",
     "electron-to-chromium": "^1.5.233",
     "escalade": "^3.2.0",
+    "firebase": "^12.4.0",
     "fraction.js": "^4.3.7",
     "nanoid": "^3.3.11",
     "node-releases": "^2.0.23",

@@ -1,39 +1,44 @@
 // src/js/app.js
-document.addEventListener('DOMContentLoaded', () => {
+import { auth } from './firebase-config.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { tasksService, listsService } from './db.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('TaskMate app.js loaded');
 
   // --- CHECK AUTHENTICATION ---
-  const currentUser = window.checkAuth ? window.checkAuth() : null;
-  if (!currentUser) {
-    // User not authenticated, redirect handled by checkAuth
-    return;
-  }
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
 
-  // Update user name in greeting
-  const userNameEl = document.getElementById('userName');
-  if (userNameEl && currentUser.name) {
-    userNameEl.textContent = currentUser.name.split(' ')[0]; // First name only
-  }
+    // Update user name in greeting
+    const userNameEl = document.getElementById('userName');
+    if (userNameEl && user.displayName) {
+      userNameEl.textContent = user.displayName.split(' ')[0]; // First name only
+    }
 
-  // --- STORAGE KEYS ---
-  const TASKS_KEY = 'taskmate_tasks_v1';
-  const LISTS_KEY = 'taskmate_lists_v1';
+    // Initialize app with Firebase data
+    await initializeApp();
+  });
 
-  // --- Default sample data (used only if no localStorage) ---
-  const sampleTasks = [
-    { id: 1, title: "Grocery Shopping", list: "Shopping", due: "Tomorrow", priority: "High", status: "To Do", description: "Buy milk, eggs, bread." },
-    { id: 2, title: "Project Proposal", list: "Work", due: "Next Week", priority: "Medium", status: "In Progress", description: "Outline milestones and deliverables." },
-    { id: 3, title: "Book Appointment", list: "Personal", due: "Today", priority: "High", status: "To Do", description: "Call clinic for appointment." }
-  ];
-  const sampleLists = ["Personal","Work","Shopping","Ideas","Travel","Movies","Books","Music",
-    "Fitness","Finance","Home","Projects","Events","Goals","Habits","Routines"
-];
+  async function initializeApp() {
+    // --- LOAD DATA FROM FIREBASE ---
+    let tasks = [];
+    let lists = [];
 
-  // --- State (load from localStorage if present) ---
-  let tasks = loadFromStorage(TASKS_KEY) || sampleTasks.slice();
-  let lists = loadFromStorage(LISTS_KEY) || sampleLists.slice();
+    try {
+      tasks = await tasksService.getAllTasks();
+      lists = await listsService.getAllLists();
+    } catch (error) {
+      console.error('Error loading data:', error);
+      tasks = [];
+      lists = ["Personal","Work","Shopping","Ideas","Travel","Movies","Books","Music",
+        "Fitness","Finance","Home","Projects","Events","Goals","Habits","Routines"];
+    }
 
-  // --- Short helpers to get DOM nodes ---
+    // --- Short helpers to get DOM nodes ---
   const $ = id => document.getElementById(id);
   const tasksTbody = $('tasksTbody');
   const listContainer = $('listContainer');
@@ -523,4 +528,5 @@ if (logoutBtn) {
   // --- Helper: Escape HTML reused above (also used in focus select) ---
   function escapeHtml (s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+  } // End of initializeApp function
 });

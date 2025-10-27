@@ -1,10 +1,21 @@
-// src/js/auth.js - Authentication handling
+// src/js/auth.js - Firebase Authentication handling
+
+import { auth } from './firebase-config.js';
+import { 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { 
+  doc, 
+  setDoc, 
+  serverTimestamp 
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { db } from './firebase-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Storage keys
-  const USERS_KEY = 'taskmate_users';
-  const CURRENT_USER_KEY = 'taskmate_current_user';
-
   // Helper functions
   const $ = id => document.getElementById(id);
   
@@ -26,24 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
       successEl.classList.remove('hidden');
       setTimeout(() => successEl.classList.add('hidden'), 3000);
     }
-  };
-
-  const getUsers = () => {
-    const users = localStorage.getItem(USERS_KEY);
-    return users ? JSON.parse(users) : [];
-  };
-
-  const saveUsers = (users) => {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  };
-
-  const setCurrentUser = (user) => {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-  };
-
-  const getCurrentUser = () => {
-    const user = localStorage.getItem(CURRENT_USER_KEY);
-    return user ? JSON.parse(user) : null;
   };
 
   const validateEmail = (email) => {
@@ -78,13 +71,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Handle login form submission
-    loginForm.addEventListener('submit', (e) => {
+    // Handle login form submission with Firebase
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const email = $('email').value.trim();
       const password = $('password').value;
-      const remember = $('remember').checked;
+      const submitBtn = loginForm.querySelector('button[type="submit"]');
 
       // Validate email
       if (!validateEmail(email)) {
@@ -92,33 +85,46 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Get users from localStorage
-      const users = getUsers();
-      const user = users.find(u => u.email === email);
+      // Disable submit button
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in...';
 
-      if (!user) {
-        showError('loginError', 'loginErrorText', 'No account found with this email');
-        return;
+      try {
+        // Sign in with Firebase
+        await signInWithEmailAndPassword(auth, email, password);
+        
+        // Redirect to dashboard (auth state observer will handle this)
+        window.location.href = 'dashboard.html';
+      } catch (error) {
+        console.error('Login error:', error);
+        
+        let errorMessage = 'Failed to sign in';
+        switch (error.code) {
+          case 'auth/user-not-found':
+            errorMessage = 'No account found with this email';
+            break;
+          case 'auth/wrong-password':
+            errorMessage = 'Incorrect password';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'Invalid email address';
+            break;
+          case 'auth/too-many-requests':
+            errorMessage = 'Too many failed attempts. Please try again later';
+            break;
+          case 'auth/invalid-credential':
+            errorMessage = 'Invalid email or password';
+            break;
+          default:
+            errorMessage = error.message;
+        }
+        
+        showError('loginError', 'loginErrorText', errorMessage);
+        
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
       }
-
-      if (user.password !== password) {
-        showError('loginError', 'loginErrorText', 'Incorrect password');
-        return;
-      }
-
-      // Successful login
-      const userSession = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        remember: remember,
-        loginTime: new Date().toISOString()
-      };
-
-      setCurrentUser(userSession);
-      
-      // Redirect to dashboard
-      window.location.href = 'dashboard.html';
     });
   }
 
@@ -148,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Handle registration form submission
-    registerForm.addEventListener('submit', (e) => {
+    // Handle registration form submission with Firebase
+    registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const fullName = $('fullName').value.trim();
@@ -157,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = $('regPassword').value;
       const confirmPassword = $('confirmPassword').value;
       const termsAccepted = $('terms').checked;
+      const submitBtn = registerForm.querySelector('button[type="submit"]');
 
       // Validation
       if (!fullName || fullName.length < 2) {
@@ -184,52 +191,100 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Check if user already exists
-      const users = getUsers();
-      if (users.some(u => u.email === email)) {
-        showError('registerError', 'registerErrorText', 'An account with this email already exists');
-        return;
+      // Disable submit button
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating account...';
+
+      try {
+        // Create user with Firebase Authentication
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Update user profile with display name
+        await updateProfile(user, {
+          displayName: fullName
+        });
+
+        // Save user data to Firestore
+        await setDoc(doc(db, 'users', user.uid), {
+          name: fullName,
+          email: email,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+
+        // Show success message
+        showSuccess('registerSuccess', 'registerSuccessText', 'Account created successfully! Redirecting to login...');
+        
+        // Clear form
+        registerForm.reset();
+
+        // Redirect to login page after 2 seconds
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Registration error:', error);
+        
+        let errorMessage = 'Failed to create account';
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = 'An account with this email already exists';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'Invalid email address';
+            break;
+          case 'auth/weak-password':
+            errorMessage = 'Password is too weak';
+            break;
+          case 'auth/operation-not-allowed':
+            errorMessage = 'Email/password accounts are not enabled';
+            break;
+          default:
+            errorMessage = error.message;
+        }
+        
+        showError('registerError', 'registerErrorText', errorMessage);
+        
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
       }
-
-      // Create new user
-      const newUser = {
-        id: Date.now(),
-        name: fullName,
-        email: email,
-        password: password,
-        createdAt: new Date().toISOString()
-      };
-
-      users.push(newUser);
-      saveUsers(users);
-
-      // Show success message
-      showSuccess('registerSuccess', 'registerSuccessText', 'Account created successfully! Redirecting to login...');
-      
-      // Clear form
-      registerForm.reset();
-
-      // Redirect to login page after 2 seconds
-      setTimeout(() => {
-        window.location.href = 'login.html';
-      }, 2000);
     });
   }
 
-  // ==================== CHECK AUTHENTICATION ON DASHBOARD ====================
-  // This will be called from dashboard.html
+  // ==================== CHECK AUTHENTICATION ====================
   window.checkAuth = () => {
-    const currentUser = getCurrentUser();
-    if (!currentUser) {
-      window.location.href = 'login.html';
-      return null;
-    }
-    return currentUser;
+    return new Promise((resolve) => {
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.href = 'login.html';
+          resolve(null);
+        } else {
+          resolve({
+            uid: user.uid,
+            name: user.displayName,
+            email: user.email
+          });
+        }
+      });
+    });
   };
 
   // ==================== LOGOUT FUNCTION ====================
-  window.logout = () => {
-    localStorage.removeItem(CURRENT_USER_KEY);
-    window.location.href = 'login.html';
+  window.logout = async () => {
+    try {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Failed to log out. Please try again.');
+    }
+  };
+
+  // ==================== GET CURRENT USER ====================
+  window.getCurrentUser = () => {
+    return auth.currentUser;
   };
 });

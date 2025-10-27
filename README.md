@@ -1,17 +1,23 @@
 # TaskMate - Modern Task Management System
 
-A beautiful, modern task management web application with clean white UI/UX design. TaskMate helps you organize your work, manage tasks efficiently, and boost your productivity.
+A beautiful, modern task management web application with clean white UI/UX design and **Firebase backend**. TaskMate helps you organize your work, manage tasks efficiently, and boost your productivity with real-time data synchronization.
 
 ![TaskMate](src/img/logo.png)
 
 ## ✨ Features
 
-### 🔐 Authentication System
+### 🔐 Authentication System (Firebase Auth)
 - **User Registration** - Create new accounts with email and password
-- **Secure Login** - User authentication with remember me functionality
+- **Secure Login** - Firebase Authentication with remember me functionality
 - **Password Validation** - Minimum 8 characters requirement
-- **Session Management** - Persistent login sessions
-- **Social Login UI** - Google and Facebook login buttons (UI ready)
+- **Session Management** - Persistent login sessions across devices
+- **Real-time Auth** - Instant authentication state updates
+
+### 🗄️ Cloud Database (Firestore)
+- **Real-time Sync** - Changes sync instantly across all devices
+- **Secure Storage** - Data stored in Google's Firebase Firestore
+- **User Isolation** - Each user's data is completely private
+- **Offline Support** - Works offline, syncs when back online
 
 ### 📋 Task Management
 - **Create Tasks** - Add new tasks with titles, descriptions, due dates, and priorities
@@ -44,6 +50,7 @@ A beautiful, modern task management web application with clean white UI/UX desig
 ### Prerequisites
 - Web browser (Chrome, Firefox, Safari, Edge)
 - Node.js and npm (for development)
+- **Firebase account** (free tier available)
 
 ### Installation
 
@@ -58,12 +65,19 @@ A beautiful, modern task management web application with clean white UI/UX desig
    npm install
    ```
 
-3. **Build the CSS**
+3. **Set up Firebase** (IMPORTANT!)
+   - Follow the detailed guide in [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
+   - Create a Firebase project
+   - Enable Authentication (Email/Password)
+   - Create Firestore Database
+   - Copy your Firebase config to `src/js/firebase-config.js`
+
+4. **Build the CSS**
    ```bash
    npm run build
    ```
 
-4. **Open in browser**
+5. **Open in browser**
    - Simply open `index.html` in your web browser
    - Or use a local server like Live Server in VS Code
 
@@ -105,20 +119,63 @@ TaskMate/
 
 - **HTML5** - Semantic markup
 - **Tailwind CSS v4.1** - Utility-first CSS framework
-- **Vanilla JavaScript** - No frameworks, pure JS
-- **LocalStorage API** - Client-side data persistence
+- **Vanilla JavaScript** - ES6 modules
+- **Firebase v10.7** - Backend services
+  - **Firebase Authentication** - User management
+  - **Cloud Firestore** - NoSQL database
 - **PostCSS** - CSS processing
 - **Autoprefixer** - CSS vendor prefixing
 
 ## 💾 Data Storage
 
-TaskMate uses browser LocalStorage to store:
-- User accounts (email, password, name)
-- Current user session
-- Tasks and their properties
+TaskMate uses **Firebase Firestore** to store:
+- User accounts (managed by Firebase Auth)
+- Tasks with all properties
 - Custom lists
+- User preferences
 
-**Note:** Data is stored locally in your browser. Clearing browser data will remove all tasks and user information.
+### Data Structure
+
+**Users Collection** (`/users/{userId}`)
+```javascript
+{
+  name: "John Doe",
+  email: "john@example.com",
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+**Tasks Collection** (`/tasks/{taskId}`)
+```javascript
+{
+  userId: "user123",
+  title: "Complete project",
+  description: "Finish the final report",
+  list: "Work",
+  due: "Tomorrow",
+  priority: "High",
+  status: "In Progress",
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+**Lists Collection** (`/lists/{listId}`)
+```javascript
+{
+  userId: "user123",
+  name: "Custom List Name",
+  createdAt: timestamp
+}
+```
+
+**Benefits:**
+- ✅ Data synced across devices
+- ✅ Real-time updates
+- ✅ Secure with Firestore rules
+- ✅ Automatic backups
+- ✅ Scalable infrastructure
 
 ## 🎯 Usage
 
@@ -174,27 +231,35 @@ TaskMate is fully responsive and works on:
 
 ## 🔒 Security Notes
 
-**Important:** This is a client-side application using LocalStorage for demonstration purposes. For production use:
+**Firebase Security Features:**
+- ✅ Server-side authentication
+- ✅ Secure password hashing (handled by Firebase)
+- ✅ HTTPS/SSL encryption (automatic with Firebase)
+- ✅ Firestore security rules (user data isolation)
+- ✅ CSRF protection (built into Firebase)
 
-- Implement server-side authentication
-- Use secure password hashing (bcrypt, etc.)
-- Add HTTPS/SSL encryption
-- Implement JWT or session-based auth
-- Add CSRF protection
-- Sanitize user inputs
+**Firestore Security Rules ensure:**
+- Users can only read/write their own data
+- Authentication required for all operations
+- Data validation at the database level
+
+See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for complete security configuration.
 
 ## 🚧 Future Enhancements
 
-- [ ] Backend integration with database
-- [ ] Real user authentication with JWT
+- [ ] Social authentication (Google, Facebook OAuth)
 - [ ] Email verification
 - [ ] Password reset functionality
 - [ ] Task sharing and collaboration
 - [ ] Calendar integration
-- [ ] Task reminders and notifications
+- [ ] Push notifications (Firebase Cloud Messaging)
+- [ ] Task reminders with scheduling
 - [ ] Data export/import (JSON, CSV)
 - [ ] Dark mode theme
 - [ ] Progressive Web App (PWA)
+- [ ] Mobile apps (React Native/Flutter)
+- [ ] Task attachments (Firebase Storage)
+- [ ] Real-time collaboration features
 
 ## 📄 License
 
