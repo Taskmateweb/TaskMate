@@ -1,2 +1,126 @@
-
 @import "tailwindcss";
+
+/* Custom Theme Variables for Tailwind v4 */
+@theme {
+  /* Custom Colors - Primary (Blue) */
+  --color-primary-50: #f0f9ff;
+  --color-primary-100: #e0f2fe;
+  --color-primary-200: #bae6fd;
+  --color-primary-300: #7dd3fc;
+  --color-primary-400: #38bdf8;
+  --color-primary-500: #0ea5e9;
+  --color-primary-600: #0284c7;
+  --color-primary-700: #0369a1;
+  --color-primary-800: #075985;
+  --color-primary-900: #0c4a6e;
+
+  /* Custom Colors - Secondary (Purple) */
+  --color-secondary-50: #faf5ff;
+  --color-secondary-100: #f3e8ff;
+  --color-secondary-200: #e9d5ff;
+  --color-secondary-300: #d8b4fe;
+  --color-secondary-400: #c084fc;
+  --color-secondary-500: #a855f7;
+  --color-secondary-600: #9333ea;
+  --color-secondary-700: #7e22ce;
+  --color-secondary-800: #6b21a8;
+  --color-secondary-900: #581c87;
+
+  /* Custom Colors - Accent (Orange) */
+  --color-accent-50: #fff7ed;
+  --color-accent-100: #ffedd5;
+  --color-accent-200: #fed7aa;
+  --color-accent-300: #fdba74;
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea580c;
+  --color-accent-700: #c2410c;
+  --color-accent-800: #9a3412;
+  --color-accent-900: #7c2d12;
+
+  /* Custom Animations */
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-slide-up: slideUp 0.5s ease-out;
+  --animate-slide-down: slideDown 0.5s ease-out;
+  --animate-fade-in: fadeIn 0.5s ease-in;
+  --animate-scale-in: scaleIn 0.3s ease-out;
+  --animate-shimmer: shimmer 2s infinite;
+}
+
+/* Keyframe Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  0% { transform: translateY(-100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+/* Custom Utility Classes */
+@layer utilities {
+  .animate-float {
+    animation: var(--animate-float);
+  }
+  
+  .animate-slide-up {
+    animation: var(--animate-slide-up);
+  }
+  
+  .animate-slide-down {
+    animation: var(--animate-slide-down);
+  }
+  
+  .animate-fade-in {
+    animation: var(--animate-fade-in);
+  }
+  
+  .animate-scale-in {
+    animation: var(--animate-scale-in);
+  }
+  
+  .animate-shimmer {
+    animation: var(--animate-shimmer);
+  }
+
+  .bg-gradient-primary {
+    background-image: linear-gradient(135deg, #667eea 0%, #0ea5e9 100%);
+  }
+  
+  .bg-gradient-secondary {
+    background-image: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+  
+  .shadow-glass {
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  }
+  
+  .shadow-glow {
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+  }
+  
+  .shadow-glow-lg {
+    box-shadow: 0 0 30px rgba(102, 126, 234, 0.8);
+  }
+}

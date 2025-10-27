@@ -1,78 +1,217 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>About Us — TaskMate</title>
-  <link rel="stylesheet" href="./src/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us - TaskMate</title>
+  <link rel="stylesheet" href="./src/css/style.css?v=2">
 </head>
-<body class="bg-white text-gray-900 antialiased">
+<body class="bg-gradient-to-br from-primary-50 via-white to-secondary-50 min-h-screen">
 
   <!-- Header -->
-  <header class="bg-white border-b">
-    <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-      <a href="index.html" class="flex items-center gap-3">
-        <img src="src/img/logo.png" alt="TaskMate" class="w-10 h-10 object-contain">
-        <span class="font-bold text-lg">TaskMate</span>
-      </a>
-      <nav class="space-x-6 text-gray-700">
-        <a href="index.html" class="hover:text-blue-600">Home</a>
-        <a href="about.html" class="font-semibold text-blue-600">About</a>
-        <a href="contact.html" class="hover:text-blue-600">Contact</a>
-      </nav>
+  <header class="bg-white/80 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 bg-gradient-to-br from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <span class="font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">TaskMate</span>
+        </a>
+        <nav class="hidden md:flex items-center gap-8">
+          <a href="index.html" class="text-gray-600 hover:text-primary-600 transition font-medium">Home</a>
+          <a href="about.html" class="text-primary-600 font-semibold">About</a>
+          <a href="contact.html" class="text-gray-600 hover:text-primary-600 transition font-medium">Contact</a>
+          <a href="login.html" class="px-5 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg font-semibold hover:shadow-xl transition-all">Sign In</a>
+        </nav>
+      </div>
     </div>
   </header>
 
-  <!-- Hero -->
-  <main class="max-w-6xl mx-auto px-6 py-16">
-    <div class="grid md:grid-cols-2 gap-12 items-center">
-      <div>
-        <h1 class="text-4xl md:text-5xl font-extrabold mb-4">About TaskMate</h1>
-        <p class="text-gray-700 mb-6 text-lg">
-          TaskMate was built to help you organize tasks, focus on what matters, and collaborate with your team. We combine a clean UI with thoughtful features like focus sessions, progress tracking, and simple task management.
+  <!-- Hero Section -->
+  <section class="py-20">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h1 class="text-5xl md:text-6xl font-extrabold mb-6 bg-gradient-to-r from-primary-600 via-secondary-600 to-accent-600 bg-clip-text text-transparent">
+          About TaskMate
+        </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Empowering individuals and teams to achieve more with smart task management and seamless collaboration.
         </p>
-
-        <h3 class="text-xl font-semibold mt-6 mb-2">Our mission</h3>
-        <p class="text-gray-700 mb-4">
-          To empower people and teams to get more meaningful work done with less friction — one focused session at a time.
-        </p>
-
-        <h3 class="text-xl font-semibold mt-4 mb-2">Core values</h3>
-        <ul class="list-disc list-inside text-gray-700 space-y-2">
-          <li>Clarity — keep things simple and focused</li>
-          <li>Reliability — build tools you can trust</li>
-          <li>Respect — help users protect their time and attention</li>
-        </ul>
       </div>
 
-      <div class="bg-gray-50 rounded-xl p-8 shadow-sm">
-        <h4 class="text-lg font-semibold mb-3">Who is TaskMate for?</h4>
-        <p class="text-gray-700 mb-4">
-          Students, developers, professionals, and small teams who want a lightweight workflow to track tasks and protect focused time.
-        </p>
+      <!-- Mission & Vision Cards -->
+      <div class="grid md:grid-cols-2 gap-8 mb-16">
+        <div class="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl p-8 text-white shadow-xl">
+          <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold mb-3">Our Mission</h2>
+          <p class="text-white/90 text-lg">
+            To empower people and teams to get more meaningful work done with less friction — one focused session at a time.
+          </p>
+        </div>
 
-        <h4 class="text-lg font-semibold mb-3">Get involved</h4>
-        <p class="text-gray-700 mb-4">
-          Feedback helps us grow. Use the contact page to share suggestions, report bugs, or request features.
-        </p>
-        <a href="contact.html" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">Contact us</a>
+        <div class="bg-gradient-to-br from-secondary-500 to-accent-500 rounded-2xl p-8 text-white shadow-xl">
+          <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold mb-3">Our Vision</h2>
+          <p class="text-white/90 text-lg">
+            A world where everyone has the tools to organize, prioritize, and accomplish their goals without overwhelm.
+          </p>
+        </div>
+      </div>
+
+      <!-- Core Values -->
+      <div class="bg-white rounded-2xl shadow-xl p-10 mb-16">
+        <h2 class="text-3xl font-bold text-center mb-10 text-gray-900">Core Values</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="text-center">
+            <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <svg class="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-gray-900">Clarity</h3>
+            <p class="text-gray-600">Keep things simple and focused for better productivity</p>
+          </div>
+
+          <div class="text-center">
+            <div class="w-16 h-16 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <svg class="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-gray-900">Reliability</h3>
+            <p class="text-gray-600">Build tools you can trust for mission-critical work</p>
+          </div>
+
+          <div class="text-center">
+            <div class="w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <svg class="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-gray-900">Respect</h3>
+            <p class="text-gray-600">Help users protect their time and attention</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Who is it for -->
+      <div class="bg-gradient-to-r from-gray-50 to-primary-50 rounded-2xl p-10">
+        <h2 class="text-3xl font-bold text-center mb-8 text-gray-900">Who is TaskMate for?</h2>
+        <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900 mb-1">Busy Professionals</h4>
+              <p class="text-gray-600 text-sm">Juggling multiple projects and deadlines</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-secondary-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900 mb-1">Students</h4>
+              <p class="text-gray-600 text-sm">Managing coursework and assignments</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-accent-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900 mb-1">Teams</h4>
+              <p class="text-gray-600 text-sm">Collaborating on shared goals</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900 mb-1">Entrepreneurs</h4>
+              <p class="text-gray-600 text-sm">Building and growing their business</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </main>
+  </section>
 
   <!-- Footer -->
-  <footer class="border-t">
-    <div class="max-w-6xl mx-auto px-6 py-6 text-sm text-gray-600 flex flex-col md:flex-row justify-between items-center gap-4">
-      <div>© <span id="year"></span> TaskMate. All rights reserved.</div>
-      <div class="space-x-4">
-        <a href="privacy.html" class="hover:text-blue-600">Privacy Policy</a>
-        <a href="terms.html" class="hover:text-blue-600">Terms</a>
+  <footer class="bg-gray-900 text-gray-300 py-12">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid md:grid-cols-4 gap-8 mb-8">
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-8 h-8 bg-gradient-to-br from-primary-600 to-secondary-600 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <span class="font-bold text-xl text-white">TaskMate</span>
+          </div>
+          <p class="text-sm text-gray-400">Organize. Focus. Achieve.</p>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-white mb-4">Company</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="about.html" class="hover:text-primary-400 transition">About Us</a></li>
+            <li><a href="contact.html" class="hover:text-primary-400 transition">Contact</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-white mb-4">Legal</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="privacy.html" class="hover:text-primary-400 transition">Privacy Policy</a></li>
+            <li><a href="terms.html" class="hover:text-primary-400 transition">Terms of Service</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-white mb-4">Connect</h4>
+          <div class="flex gap-3">
+            <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-primary-600 transition">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-primary-600 transition">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
+        <p>&copy; 2025 TaskMate. All rights reserved.</p>
       </div>
     </div>
   </footer>
 
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
 </body>
 </html>

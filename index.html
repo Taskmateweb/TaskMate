@@ -3,137 +3,319 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Taskmate</title>
-  <link rel="stylesheet" href="src/css/style.css" />
-  
-
+  <title>TaskMate - Organize Your Work, Simplify Your Life</title>
+  <link rel="stylesheet" href="src/css/style.css?v=2" />
 </head>
-<body class="bg-white text-gray-800 antialiased flex flex-col min-h-screen">
+<body class="bg-gradient-to-br from-primary-50 via-white to-secondary-50 text-gray-800 antialiased">
 
   <!-- Navbar -->
-  <header class="w-full py-6 px-8 flex justify-between items-center">
-    <div class="flex items-center">
-      <img src="src/img/logo.png" alt="Taskmate Logo" class="h-10 w-auto" />
-      <span class="ml-2 text-xl font-semibold">TaskMate</span>
+  <header class="fixed top-0 w-full z-50 backdrop-blur-md bg-white/70 border-b border-gray-100 shadow-sm">
+    <div class="max-w-7xl mx-auto py-4 px-6 md:px-8 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </div>
+        <span class="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">TaskMate</span>
+      </div>
+      <nav class="hidden md:flex space-x-8 items-center">
+        <a href="#features" class="text-gray-600 hover:text-primary-600 transition font-medium">Features</a>
+        <a href="#benefits" class="text-gray-600 hover:text-primary-600 transition font-medium">Benefits</a>
+        <a href="about.html" class="text-gray-600 hover:text-primary-600 transition font-medium">About</a>
+        <a href="contact.html" class="text-gray-600 hover:text-primary-600 transition font-medium">Contact</a>
+        <a href="login.html" class="px-6 py-2.5 bg-gradient-primary text-white rounded-full hover:shadow-glow transition-all transform hover:scale-105 font-semibold">
+          Login
+        </a>
+      </nav>
+      <!-- Mobile Menu Button -->
+      <button class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
     </div>
-    <nav class="space-x-6">
-      <a href="#features" class="hover:text-blue-600">Features</a>
-      <a href="about.html" class="hover:text-blue-600">About</a>
-      <a href="contact.html" class="hover:text-blue-600">Contact</a>
-      <a href="login.html" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Login</a>
-    </nav>
   </header>
 
   <!-- Hero Section -->
+  <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <!-- Animated Background Elements -->
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute top-20 left-10 w-72 h-72 bg-primary-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float"></div>
+      <div class="absolute top-40 right-10 w-72 h-72 bg-secondary-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float" style="animation-delay: 2s;"></div>
+      <div class="absolute -bottom-8 left-1/2 w-72 h-72 bg-accent-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-float" style="animation-delay: 4s;"></div>
+    </div>
 
-<main class="relative flex items-center justify-center h-screen bg-white overflow-hidden">
-  <!-- Text Content -->
-  <div class="px-6 md:px-12 text-center">
-    <h2 class="text-5xl md:text-6xl font-extrabold mb-5 text-gray-600 leading-tight animate-fadeIn">
-      Organize your work, Simplify your life
-    </h2>
+    <div class="relative max-w-7xl mx-auto px-6 md:px-12 py-20 grid md:grid-cols-2 gap-12 items-center">
+      <!-- Text Content -->
+      <div class="text-center md:text-left space-y-8 animate-slide-up">
+        <div class="inline-block">
+          <span class="px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold inline-flex items-center space-x-2">
+            <span class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></span>
+            <span>🎉 Now with Firebase Integration!</span>
+          </span>
+        </div>
+        
+        <h1 class="text-5xl md:text-7xl font-extrabold leading-tight">
+          <span class="bg-gradient-primary bg-clip-text text-transparent">Organize</span> your work,<br>
+          <span class="bg-gradient-to-r from-secondary-500 to-accent-500 bg-clip-text text-transparent">Simplify</span> your life
+        </h1>
 
-    <!-- Paragraphs with explicit line breaks -->
-    <p class="text-black/90 text-lg md:text-xl animate-fadeIn">
-      TaskMate helps you manage your tasks efficiently, collaborate with your team, and achieve your goals.<br>
-      Get started today and experience a new level of productivity.
-    </p>
-
-    <a
-      href="register.html"
-      class="inline-block mt-6 px-8 py-3 bg-blue-600 text-white text-lg font-semibold rounded-full shadow-md hover:bg-blue-700 hover:shadow-lg transition animate-fadeIn"
-    >
-      Get Started
-    </a>
-  </div>
-</main>
-
-
-
-
-
-<!-- Tailwind Custom Animation -->
-<style>
-  @keyframes fadeIn {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-  .animate-fadeIn {
-    animation: fadeIn 1s ease-out forwards;
-  }
-</style>
-
-
-
-
-  <!-- ========================= -->
-  <!-- 🔹 Key Features Section 🔹 -->
-  <!-- ========================= -->
-  <section id="features" class="bg-gray-50 py-20 px-8 text-center">
-    <h2 class="text-3xl font-bold mb-4">Key Features</h2>
-    <p class="text-gray-600 max-w-2xl mx-auto mb-12">
-      TaskMate offers a range of features designed to enhance your productivity and teamwork.
-    </p>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-      <!-- Feature 1 -->
-      <div class="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition">
-        <div class="text-blue-600 mb-3 text-2xl">✔️</div>
-        <h3 class="font-semibold text-lg mb-2">Task Management</h3>
-        <p class="text-gray-600 text-sm">
-          Create, assign, and track tasks with ease. Set deadlines, prioritize tasks, and monitor progress in real-time.
+        <p class="text-xl text-gray-600 leading-relaxed max-w-2xl">
+          TaskMate helps you manage tasks efficiently, collaborate with your team, and achieve your goals with our beautiful, modern interface powered by real-time cloud sync.
         </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+          <a href="register.html" 
+             class="group px-8 py-4 bg-gradient-primary text-white text-lg font-semibold rounded-full shadow-lg hover:shadow-glow-lg transition-all transform hover:scale-105 flex items-center justify-center space-x-2">
+            <span>Get Started Free</span>
+            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+          <a href="#features" 
+             class="px-8 py-4 bg-white border-2 border-primary-200 text-primary-700 text-lg font-semibold rounded-full hover:bg-primary-50 transition-all transform hover:scale-105 flex items-center justify-center space-x-2">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Watch Demo</span>
+          </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="flex gap-8 justify-center md:justify-start pt-8">
+          <div class="text-center md:text-left">
+            <div class="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">10K+</div>
+            <div class="text-sm text-gray-600">Active Users</div>
+          </div>
+          <div class="text-center md:text-left">
+            <div class="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">50K+</div>
+            <div class="text-sm text-gray-600">Tasks Completed</div>
+          </div>
+          <div class="text-center md:text-left">
+            <div class="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">4.9★</div>
+            <div class="text-sm text-gray-600">User Rating</div>
+          </div>
+        </div>
       </div>
 
-      <!-- Feature 2 -->
-      <div class="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition">
-        <div class="text-blue-600 mb-3 text-2xl">👥</div>
-        <h3 class="font-semibold text-lg mb-2">Team Collaboration</h3>
-        <p class="text-gray-600 text-sm">
-          Collaborate with your team members on projects, share files, and communicate effectively within the app.
-        </p>
-      </div>
-
-      <!-- Feature 3 -->
-      <div class="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition">
-        <div class="text-blue-600 mb-3 text-2xl">📅</div>
-        <h3 class="font-semibold text-lg mb-2">Scheduling</h3>
-        <p class="text-gray-600 text-sm">
-          Schedule tasks and events, set reminders, and integrate with your calendar for seamless time management.
-        </p>
+      <!-- Hero Image/Illustration -->
+      <div class="relative animate-float">
+        <div class="relative bg-white rounded-3xl shadow-glass p-8 backdrop-blur-sm border border-gray-100">
+          <!-- Mock Dashboard Preview -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="h-3 w-32 bg-gradient-primary rounded-full"></div>
+              <div class="flex space-x-2">
+                <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                <div class="w-3 h-3 rounded-full bg-green-400"></div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex items-center space-x-3 p-3 bg-primary-50 rounded-lg">
+                <div class="w-5 h-5 rounded bg-primary-500"></div>
+                <div class="h-2 w-full bg-primary-200 rounded"></div>
+              </div>
+              <div class="flex items-center space-x-3 p-3 bg-secondary-50 rounded-lg">
+                <div class="w-5 h-5 rounded bg-secondary-500"></div>
+                <div class="h-2 w-3/4 bg-secondary-200 rounded"></div>
+              </div>
+              <div class="flex items-center space-x-3 p-3 bg-accent-50 rounded-lg">
+                <div class="w-5 h-5 rounded bg-accent-500"></div>
+                <div class="h-2 w-2/3 bg-accent-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Decorative Elements -->
+        <div class="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-2xl rotate-12 opacity-20"></div>
+        <div class="absolute -bottom-6 -left-6 w-32 h-32 bg-gradient-to-br from-accent-400 to-primary-400 rounded-full opacity-20"></div>
       </div>
     </div>
   </section>
 
-  <!-- ================================= -->
-  <!-- 🔹 Call to Action (Boost Section) 🔹 -->
-  <!-- ================================= -->
-  <section class="py-20 text-center">
-    <h2 class="text-3xl font-extrabold mb-3">Ready to Boost Your Productivity?</h2>
-    <p class="text-gray-600 mb-8">
-      Join thousands of users who are already using TaskMate to manage their tasks and achieve their goals.
-    </p>
-   <a
-      href="register.html"
-      class="inline-block mt-6 px-8 py-3 bg-blue-600 text-white text-lg font-semibold rounded-full shadow-md hover:bg-blue-700 hover:shadow-lg transition animate-fadeIn"
-    >
-      Get Started
-    </a>
+  <!-- Features Section -->
+  <section id="features" class="py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-6 md:px-8">
+      <div class="text-center mb-16 animate-fade-in">
+        <span class="px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">Features</span>
+        <h2 class="text-4xl md:text-5xl font-bold mt-4 mb-4">Everything you need to stay productive</h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Powerful features designed to enhance your workflow and team collaboration
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="group p-8 bg-gradient-to-br from-primary-50 to-white rounded-2xl border border-primary-100 hover:shadow-glass transition-all hover:-translate-y-2">
+          <div class="w-14 h-14 bg-gradient-primary rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-gray-800">Task Management</h3>
+          <p class="text-gray-600 leading-relaxed">
+            Create, assign, and track tasks with ease. Set deadlines, prioritize, and monitor progress in real-time with our intuitive interface.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="group p-8 bg-gradient-to-br from-secondary-50 to-white rounded-2xl border border-secondary-100 hover:shadow-glass transition-all hover:-translate-y-2">
+          <div class="w-14 h-14 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-gray-800">Team Collaboration</h3>
+          <p class="text-gray-600 leading-relaxed">
+            Work together seamlessly. Share projects, communicate effectively, and achieve your team goals faster than ever.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="group p-8 bg-gradient-to-br from-accent-50 to-white rounded-2xl border border-accent-100 hover:shadow-glass transition-all hover:-translate-y-2">
+          <div class="w-14 h-14 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-gray-800">Smart Scheduling</h3>
+          <p class="text-gray-600 leading-relaxed">
+            Plan your day efficiently. Set reminders, integrate calendars, and never miss important deadlines with AI-powered suggestions.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="group p-8 bg-gradient-to-br from-primary-50 to-white rounded-2xl border border-primary-100 hover:shadow-glass transition-all hover:-translate-y-2">
+          <div class="w-14 h-14 bg-gradient-primary rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-gray-800">Analytics & Reports</h3>
+          <p class="text-gray-600 leading-relaxed">
+            Track your productivity with detailed analytics. Generate reports and insights to optimize your workflow.
+          </p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="group p-8 bg-gradient-to-br from-secondary-50 to-white rounded-2xl border border-secondary-100 hover:shadow-glass transition-all hover:-translate-y-2">
+          <div class="w-14 h-14 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-gray-800">Secure & Private</h3>
+          <p class="text-gray-600 leading-relaxed">
+            Your data is protected with enterprise-grade security. Firebase authentication and encrypted cloud storage.
+          </p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="group p-8 bg-gradient-to-br from-accent-50 to-white rounded-2xl border border-accent-100 hover:shadow-glass transition-all hover:-translate-y-2">
+          <div class="w-14 h-14 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-gray-800">Cloud Sync</h3>
+          <p class="text-gray-600 leading-relaxed">
+            Access your tasks anywhere, anytime. Real-time sync across all your devices with Firebase Firestore.
+          </p>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <!-- ================= -->
-  <!-- 🔹 Footer 🔹 -->
-  <!-- ================= -->
-  <footer class="bg-gray-50 py-10 px-8 text-center border-t text-gray-600">
-    <div class="flex justify-center space-x-8 mb-4 text-sm">
-      <a href="about.html" class="hover:text-blue-600">About Us</a>
-      <a href="contact.html" class="hover:text-blue-600">Contact</a>
-      <a href="privacy.html" class="hover:text-blue-600">Privacy Policy</a>
-      <a href="terms.html" class="hover:text-blue-600">Terms of Service</a>
+  <!-- CTA Section -->
+  <section id="benefits" class="py-24 bg-gradient-to-br from-primary-600 via-secondary-600 to-accent-600 text-white relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-0 left-0 w-96 h-96 bg-white rounded-full filter blur-3xl"></div>
+      <div class="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full filter blur-3xl"></div>
     </div>
-    <p class="text-xs">© 2025 TaskMate. All rights reserved.</p>
+    
+    <div class="relative max-w-5xl mx-auto px-6 md:px-8 text-center space-y-8">
+      <h2 class="text-4xl md:text-5xl font-extrabold">Ready to Boost Your Productivity?</h2>
+      <p class="text-xl text-white/90 max-w-2xl mx-auto">
+        Join thousands of users who are already using TaskMate to manage their tasks and achieve their goals.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+        <a href="register.html" 
+           class="group px-10 py-4 bg-white text-primary-700 text-lg font-bold rounded-full hover:bg-gray-50 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center space-x-2">
+          <span>Start Free Trial</span>
+          <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </a>
+        <a href="contact.html" 
+           class="px-10 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/50 text-white text-lg font-bold rounded-full hover:bg-white/20 transition-all transform hover:scale-105">
+          Contact Sales
+        </a>
+      </div>
+      <p class="text-sm text-white/70 pt-4">✨ No credit card required • Free forever plan available</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-300 py-12">
+    <div class="max-w-7xl mx-auto px-6 md:px-8">
+      <div class="grid md:grid-cols-4 gap-8 mb-8">
+        <div class="col-span-2 md:col-span-1">
+          <div class="flex items-center space-x-3 mb-4">
+            <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <span class="text-xl font-bold text-white">TaskMate</span>
+          </div>
+          <p class="text-sm text-gray-400">Organize your work, simplify your life with the modern task management solution.</p>
+        </div>
+        <div>
+          <h4 class="font-semibold text-white mb-4">Product</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#features" class="hover:text-primary-400 transition">Features</a></li>
+            <li><a href="#" class="hover:text-primary-400 transition">Pricing</a></li>
+            <li><a href="#" class="hover:text-primary-400 transition">Security</a></li>
+            <li><a href="#" class="hover:text-primary-400 transition">Roadmap</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold text-white mb-4">Company</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="about.html" class="hover:text-primary-400 transition">About Us</a></li>
+            <li><a href="contact.html" class="hover:text-primary-400 transition">Contact</a></li>
+            <li><a href="#" class="hover:text-primary-400 transition">Blog</a></li>
+            <li><a href="#" class="hover:text-primary-400 transition">Careers</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold text-white mb-4">Legal</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="privacy.html" class="hover:text-primary-400 transition">Privacy Policy</a></li>
+            <li><a href="terms.html" class="hover:text-primary-400 transition">Terms of Service</a></li>
+            <li><a href="#" class="hover:text-primary-400 transition">Cookie Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <p class="text-sm text-gray-500">© 2025 TaskMate. All rights reserved.</p>
+        <div class="flex space-x-6 mt-4 md:mt-0">
+          <a href="#" class="text-gray-500 hover:text-primary-400 transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
+          <a href="#" class="text-gray-500 hover:text-primary-400 transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+          </a>
+          <a href="#" class="text-gray-500 hover:text-primary-400 transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
   </footer>
 
-  <script src="src/js/app.js"></script>
 </body>
 </html>
