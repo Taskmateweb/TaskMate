@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calendar - TaskMate</title>
+  <link rel="stylesheet" href="src/css/style.css?v=2" />
+  <style>
+    .calendar-day {
+      min-height: 100px;
+      transition: all 0.2s ease;
+    }
+    .calendar-day:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .event-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-primary-50/30 to-secondary-50/30 min-h-screen text-gray-800">
+
+  <!-- Top Nav (sticky) -->
+  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-8">
+          <a href="index.html" class="flex items-center gap-3 group">
+            <div class="w-10 h-10 bg-gradient-to-br from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <span class="font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">TaskMate</span>
+          </a>
+
+          <nav class="hidden md:flex items-center space-x-1 text-sm">
+            <a href="dashboard.html" class="px-3 py-2 rounded-lg text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition">Dashboard</a>
+            <a href="calendar.html" class="px-3 py-2 rounded-lg text-primary-600 bg-primary-50 font-medium">Calendar</a>
+            <a href="#" class="px-3 py-2 rounded-lg text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition">Reports</a>
+          </nav>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <button id="notificationsBtn" class="p-2 rounded-xl hover:bg-gray-100 transition-colors relative">
+            <svg class="w-5 h-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span class="absolute top-1 right-1 w-2 h-2 bg-accent-500 rounded-full"></span>
+          </button>
+
+          <!-- Profile dropdown -->
+          <div class="relative" id="profileWrap">
+            <button id="profileBtn"
+                    class="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-gray-100 focus:outline-none transition-colors"
+                    aria-expanded="false" aria-controls="profileMenu">
+              <img src="src/img/avatar.jpg" alt="avatar" class="h-8 w-8 rounded-full object-cover ring-2 ring-primary-100" />
+              <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+
+            <div id="profileMenu"
+                 class="origin-top-right absolute right-0 mt-2 w-48 rounded-xl shadow-xl bg-white ring-1 ring-black ring-opacity-5 py-1 text-sm z-50
+                        opacity-0 scale-95 pointer-events-none transform transition-all"
+                 role="menu" aria-hidden="true">
+              <div class="px-4 py-3 border-b border-gray-100">
+                <p class="text-xs text-gray-500">Signed in as</p>
+                <p class="text-sm font-semibold text-gray-900" id="profileEmail">user@email.com</p>
+              </div>
+              <a href="#" class="block px-4 py-2 hover:bg-gray-50 transition-colors">Profile</a>
+              <a href="#" class="block px-4 py-2 hover:bg-gray-50 transition-colors">Settings</a>
+              <div class="border-t border-gray-100 my-1"></div>
+              <button id="logoutBtn" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 transition-colors">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    
+    <!-- Calendar Header -->
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 p-6 mb-6">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-extrabold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+            Calendar
+          </h1>
+          <p class="text-sm text-gray-600 mt-1">Schedule and manage your events</p>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+          <!-- Month Navigation -->
+          <div class="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+            <button id="prevMonth" class="p-2 hover:bg-white rounded-lg transition-colors">
+              <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <span id="currentMonth" class="px-4 font-semibold text-gray-800 min-w-[160px] text-center">January 2025</span>
+            <button id="nextMonth" class="p-2 hover:bg-white rounded-lg transition-colors">
+              <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+
+          <!-- View Toggle -->
+          <div class="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+            <button id="monthView" class="px-3 py-2 rounded-lg bg-white text-primary-600 font-medium text-sm transition-colors">Month</button>
+            <button id="weekView" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-white text-sm transition-colors">Week</button>
+            <button id="dayView" class="px-3 py-2 rounded-lg text-gray-600 hover:bg-white text-sm transition-colors">Day</button>
+          </div>
+
+          <!-- Add Event Button -->
+          <button id="addEventBtn" class="px-5 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl text-sm font-semibold hover:shadow-xl transition-all flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Event
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 p-6">
+      <!-- Week Days Header -->
+      <div class="grid grid-cols-7 gap-2 mb-4">
+        <div class="text-center font-semibold text-sm text-gray-700 py-2">Sun</div>
+        <div class="text-center font-semibold text-sm text-gray-700 py-2">Mon</div>
+        <div class="text-center font-semibold text-sm text-gray-700 py-2">Tue</div>
+        <div class="text-center font-semibold text-sm text-gray-700 py-2">Wed</div>
+        <div class="text-center font-semibold text-sm text-gray-700 py-2">Thu</div>
+        <div class="text-center font-semibold text-sm text-gray-700 py-2">Fri</div>
+        <div class="text-center font-semibold text-sm text-gray-700 py-2">Sat</div>
+      </div>
+
+      <!-- Calendar Days -->
+      <div id="calendarGrid" class="grid grid-cols-7 gap-2">
+        <!-- Days will be generated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Upcoming Events Sidebar (on larger screens) -->
+    <div class="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 p-6">
+      <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Upcoming Events
+      </h3>
+      <div id="upcomingEvents" class="space-y-3">
+        <!-- Events will be listed here -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Add/Edit Event Modal -->
+  <div id="eventModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-5 shadow-2xl transform scale-95 opacity-0 transition-all duration-300 my-auto" id="eventModalContent">
+      <h3 class="text-xl font-bold mb-4 flex items-center gap-2 bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+        <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span id="modalTitle">Add New Event</span>
+      </h3>
+
+      <form id="eventForm" class="space-y-3">
+        <input type="hidden" id="eventId" />
+        
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Event Title</label>
+          <input id="eventTitle" type="text" placeholder="e.g., Team Meeting" required
+            class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
+            <input id="eventStartDate" type="date" required
+              class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Start Time</label>
+            <input id="eventStartTime" type="time" required
+              class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
+            <input id="eventEndDate" type="date" required
+              class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">End Time</label>
+            <input id="eventEndTime" type="time" required
+              class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+          <select id="eventCategory" 
+            class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all">
+            <option value="meeting">Meeting</option>
+            <option value="personal">Personal</option>
+            <option value="work">Work</option>
+            <option value="birthday">Birthday</option>
+            <option value="holiday">Holiday</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+          <textarea id="eventDescription" rows="2" placeholder="Add event details..."
+            class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Location (optional)</label>
+          <input id="eventLocation" type="text" placeholder="e.g., Conference Room A"
+            class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" />
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="eventReminder" class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+            <span class="text-sm font-medium text-gray-700">Set Reminder</span>
+          </label>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3">
+          <button type="button" id="deleteEventBtn" class="hidden px-4 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50 font-semibold transition-colors">
+            Delete
+          </button>
+          <button type="button" id="cancelEvent" class="px-4 py-2 rounded-xl text-sm text-gray-700 hover:bg-gray-100 font-semibold transition-colors">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl text-sm font-semibold hover:shadow-xl transition-all">
+            Save Event
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Event Details Modal -->
+  <div id="eventDetailsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start mb-3">
+        <h3 id="detailEventTitle" class="text-lg font-bold text-gray-900"></h3>
+        <button id="closeEventDetails" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      
+      <div id="detailEventContent" class="space-y-3 text-sm text-gray-700">
+        <!-- Event details will be populated here -->
+      </div>
+
+      <div class="flex gap-2 mt-5 pt-3 border-t border-gray-200">
+        <button id="editEventFromDetails" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-colors text-sm">
+          Edit
+        </button>
+        <button id="deleteEventFromDetails" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors text-sm">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="src/js/calendar.js"></script>
+</body>
+</html>

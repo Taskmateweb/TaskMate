@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       userNameEl.textContent = user.displayName.split(' ')[0]; // First name only
     }
 
+    // Update profile email with real user email
+    const profileEmailEl = document.getElementById('profileEmail');
+    if (profileEmailEl && user.email) {
+      profileEmailEl.textContent = user.email;
+    }
+
     // Initialize app with Firebase data
     await initializeApp();
   });
@@ -40,7 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Short helpers to get DOM nodes ---
   const $ = id => document.getElementById(id);
-  const tasksTbody = $('tasksTbody');
+  const tasksContainer = $('tasksContainer');
+  const emptyState = $('emptyState');
   const listContainer = $('listContainer');
   const addTaskBtn = $('addTaskBtn');
   const addTaskModal = $('addTaskModal');
@@ -53,6 +60,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const newTaskDue = $('newTaskDue');
   const newTaskPriority = $('newTaskPriority');
   const newTaskDescription = $('newTaskDescription');
+
+  const totalTasksEl = $('totalTasks');
+  const inProgressTasksEl = $('inProgressTasks');
+  const completedTasksEl = $('completedTasks');
 
   const editModal = $('editModal'); // used by existing edit flow
   const focusCard = $('focusCard');
@@ -91,6 +102,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Data synced with Firebase');
   }
 
+  // Update stats
+  function updateStats() {
+    if (totalTasksEl) totalTasksEl.textContent = tasks.length;
+    if (inProgressTasksEl) inProgressTasksEl.textContent = tasks.filter(t => t.status === 'In Progress').length;
+    if (completedTasksEl) completedTasksEl.textContent = tasks.filter(t => t.status === 'Done').length;
+  }
+
 
 
   // --- Render lists in sidebar & populate addTask select ---
@@ -101,7 +119,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       const li = document.createElement('li');
       li.className = 'flex items-center justify-between';
       li.innerHTML = `
-        <button class="text-left w-full text-sm py-1 px-2 rounded hover:bg-gray-100" data-list="${name}">${escapeHtml(name)}</button>
+        <button class="text-left w-full text-sm py-2 px-3 rounded-xl hover:bg-primary-50 hover:text-primary-700 transition-colors flex items-center gap-2 font-medium text-gray-700" data-list="${name}">
+          <span class="w-2 h-2 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500"></span>
+          ${escapeHtml(name)}
+        </button>
       `;
       listContainer.appendChild(li);
     });
@@ -111,6 +132,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', (e) => {
         const chosen = e.currentTarget.dataset.list;
         filterByList(chosen);
+        // Highlight active list
+        listContainer.querySelectorAll('button').forEach(b => {
+          b.classList.remove('bg-primary-50', 'text-primary-700');
+        });
+        e.currentTarget.classList.add('bg-primary-50', 'text-primary-700');
       });
     });
 
@@ -149,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderTasks(filterList = null, query = '') {
-    if (!tasksTbody) return;
+    if (!tasksContainer) return;
     let items = tasks.slice();
 
     if (filterList) items = items.filter(t => t.list === filterList);
@@ -162,36 +188,113 @@ document.addEventListener('DOMContentLoaded', async () => {
       items.sort((a,b) => sort === 'priority-asc' ? map[a.priority]-map[b.priority] : map[b.priority]-map[a.priority]);
     }
 
-    tasksTbody.innerHTML = '';
-    items.forEach(task => {
-      // row
-      const tr = document.createElement('tr');
-      tr.className = 'group hover:bg-gray-50 transition';
-      tr.dataset.id = task.id;
+    // Show/hide empty state
+    if (emptyState) {
+      emptyState.classList.toggle('hidden', items.length > 0);
+    }
 
-      // title cell with strike-through if done
-      const titleCls = task.status === 'Done' ? 'py-3 px-3 line-through opacity-60' : 'py-3 px-3';
-      tr.innerHTML = `
-        <td class="${titleCls}">${escapeHtml(task.title)}</td>
-        <td class="py-3 px-3 text-sm text-gray-500">${escapeHtml(task.list)}</td>
-        <td class="py-3 px-3 text-sm text-gray-500">${escapeHtml(task.due)}</td>
-        <td class="py-3 px-3 text-sm"><span class="inline-block px-3 py-1 rounded-full text-xs ${priorityClass(task.priority)}">${escapeHtml(task.priority)}</span></td>
-        <td class="py-3 px-3 text-sm"><button class="statusBtn inline-flex items-center px-3 py-1 rounded-full text-xs border ${statusClass(task.status)}" data-id="${task.id}">${escapeHtml(task.status)}</button></td>
-        <td class="py-3 px-3 text-right">
-          <div class="relative inline-block">
-            <button class="task-more-btn text-gray-500 hover:text-gray-700" data-id="${task.id}">⋮</button>
-            <div class="task-options hidden absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg z-40">
-              <button class="w-full text-left px-3 py-2 editBtn" data-id="${task.id}">Edit</button>
-              <button class="w-full text-left px-3 py-2 markCompleteBtn" data-id="${task.id}">Mark Complete</button>
-              <button class="w-full text-left px-3 py-2 viewDescBtn" data-id="${task.id}">View Details</button>
-              <button class="w-full text-left px-3 py-2 deleteBtn text-red-600" data-id="${task.id}">Delete</button>
+    tasksContainer.innerHTML = '';
+    items.forEach(task => {
+      // Create modern task card
+      const card = document.createElement('div');
+      card.className = 'task-card bg-white rounded-xl shadow-md border border-gray-200 p-5 hover:shadow-lg transition-all cursor-pointer';
+      card.dataset.id = task.id;
+      card.title = 'Double-click to view full details';
+
+      // Priority badge colors
+      const priorityColors = {
+        'High': 'bg-red-100 text-red-700 border-red-200',
+        'Medium': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+        'Low': 'bg-green-100 text-green-700 border-green-200'
+      };
+
+      // Status colors and next status
+      const statusInfo = {
+        'To Do': { 
+          color: 'bg-gray-100 text-gray-700 border-gray-300',
+          next: 'In Progress',
+          icon: '○'
+        },
+        'In Progress': { 
+          color: 'bg-blue-100 text-blue-700 border-blue-300',
+          next: 'Done',
+          icon: '◐'
+        },
+        'Done': { 
+          color: 'bg-green-100 text-green-700 border-green-300',
+          next: 'To Do',
+          icon: '✓'
+        }
+      };
+
+      const currentStatus = statusInfo[task.status] || statusInfo['To Do'];
+      const isDone = task.status === 'Done';
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-2">
+              <h4 class="text-base font-semibold text-gray-900 ${isDone ? 'line-through opacity-60' : ''}">${escapeHtml(task.title)}</h4>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${priorityColors[task.priority] || priorityColors['Medium']}">
+                ${escapeHtml(task.priority)}
+              </span>
+            </div>
+            
+            ${task.description ? `<p class="text-sm text-gray-600 mb-3 ${isDone ? 'opacity-60' : ''}">${escapeHtml(task.description)}</p>` : ''}
+            
+            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+              <div class="flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                <span>${escapeHtml(task.list)}</span>
+              </div>
+              
+              ${task.due ? `
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span>${escapeHtml(task.due)}</span>
+                </div>
+              ` : ''}
             </div>
           </div>
-        </td>
+
+          <div class="flex flex-col items-end gap-2 flex-shrink-0">
+            <!-- Status Update Button -->
+            <button class="statusUpdateBtn inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${currentStatus.color} hover:shadow-md"
+                    data-id="${task.id}"
+                    title="Click to update status to ${currentStatus.next}">
+              <span>${currentStatus.icon}</span>
+              <span>${escapeHtml(task.status)}</span>
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+
+            <!-- Actions Menu -->
+            <div class="relative">
+              <button class="task-more-btn p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500" data-id="${task.id}">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+              </button>
+              <div class="task-options hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-xl z-40 overflow-hidden">
+                <button class="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors text-sm editBtn" data-id="${task.id}">
+                  <svg class="w-4 h-4 inline mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  Edit
+                </button>
+                <button class="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors text-sm viewDescBtn" data-id="${task.id}">
+                  <svg class="w-4 h-4 inline mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  View Details
+                </button>
+                <button class="w-full text-left px-4 py-2 hover:bg-red-50 transition-colors text-sm text-red-600 deleteBtn border-t border-gray-100" data-id="${task.id}">
+                  <svg class="w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       `;
 
-      tasksTbody.appendChild(tr);
+      tasksContainer.appendChild(card);
     });
+
+    updateStats();
   }
 
   // --- Filter by list helper ---
@@ -290,15 +393,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --- Delegated task table interactions ---
-  if (tasksTbody) {
-    tasksTbody.addEventListener('click', (e) => {
-      const tr = e.target.closest('tr');
-      const idAttr = tr && tr.dataset && tr.dataset.id ? Number(tr.dataset.id) : null;
+  if (tasksContainer) {
+    // Add double-click event to show task details
+    tasksContainer.addEventListener('dblclick', (e) => {
+      const card = e.target.closest('.task-card');
+      if (card && card.dataset.id) {
+        openTaskDetailsById(card.dataset.id);
+      }
+    });
 
-      // If clicked on statusBtn
-      const statusBtn = e.target.closest('.statusBtn');
+    tasksContainer.addEventListener('click', (e) => {
+      const card = e.target.closest('.task-card');
+      const idAttr = card && card.dataset && card.dataset.id ? card.dataset.id : null;
+
+      // If clicked on statusUpdateBtn
+      const statusBtn = e.target.closest('.statusUpdateBtn');
       if (statusBtn) {
-        const id = Number(statusBtn.dataset.id);
+        const id = statusBtn.dataset.id;
         toggleStatus(id);
         return;
       }
@@ -318,23 +429,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       // edit
       const editBtn = e.target.closest('.editBtn');
       if (editBtn) {
-        const id = Number(editBtn.dataset.id);
+        const id = editBtn.dataset.id;
         openEditModal(id);
-        return;
-      }
-
-      // mark complete
-      const markCompleteBtn = e.target.closest('.markCompleteBtn');
-      if (markCompleteBtn) {
-        const id = Number(markCompleteBtn.dataset.id);
-        markComplete(id);
         return;
       }
 
       // view details (from options)
       const viewDescBtn = e.target.closest('.viewDescBtn');
       if (viewDescBtn) {
-        const id = Number(viewDescBtn.dataset.id);
+        const id = viewDescBtn.dataset.id;
         openTaskDetailsById(id);
         return;
       }
@@ -342,16 +445,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       // delete
       const deleteBtn = e.target.closest('.deleteBtn');
       if (deleteBtn) {
-        const id = Number(deleteBtn.dataset.id);
+        const id = deleteBtn.dataset.id;
         deleteTask(id);
         return;
       }
 
-      // If clicked a row (not on a control), open details
-      if (tr && idAttr && !e.target.closest('button') && !e.target.closest('.task-options')) {
-        openTaskDetailsById(idAttr);
-        return;
-      }
+      // If clicked a card (not on a control), could open details
+      // Commenting out to avoid accidental clicks
+      // if (card && idAttr && !e.target.closest('button') && !e.target.closest('.task-options')) {
+      //   openTaskDetailsById(idAttr);
+      //   return;
+      // }
     });
 
     // close any open task-options when clicking outside
