@@ -1,6 +1,6 @@
 // src/js/app.js
 import { auth } from './firebase-config.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { tasksService, listsService } from './db.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -642,8 +642,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    window.location.href = "index.html";
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      window.location.href = "index.html";
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Failed to logout. Please try again.');
+    }
   });
 }
 
