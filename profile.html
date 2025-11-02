@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TaskMate — Profile Settings</title>
+  <link rel="stylesheet" href="src/css/style.css?v=2" />
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-primary-50/30 to-secondary-50/30 min-h-screen text-gray-800">
+
+  <!-- Top Nav (sticky) -->
+  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-8">
+          <a href="dashboard.html" class="flex items-center gap-3 group">
+            <div class="w-10 h-10 bg-gradient-to-br from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <span class="font-bold text-xl bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">TaskMate</span>
+          </a>
+
+          <nav class="hidden md:flex items-center space-x-1 text-sm">
+            <a href="dashboard.html" class="px-3 py-2 rounded-lg text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition">Dashboard</a>
+            <a href="calendar.html" class="px-3 py-2 rounded-lg text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition">Calendar</a>
+            <a href="profile.html" class="px-3 py-2 rounded-lg text-primary-600 bg-primary-50 font-medium">Profile</a>
+          </nav>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <a href="dashboard.html" class="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Profile Header Card -->
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 p-8 mb-6">
+      <div class="flex flex-col md:flex-row items-center gap-6">
+        <!-- Profile Picture -->
+        <div class="relative">
+          <div id="profilePicturePreview" class="w-32 h-32 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center ring-4 ring-primary-100">
+            <svg class="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <button id="uploadPhotoBtn" class="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </button>
+          <input type="file" id="photoUpload" accept="image/*" class="hidden" />
+        </div>
+
+        <!-- User Info -->
+        <div class="flex-1 text-center md:text-left">
+          <h1 id="profileDisplayName" class="text-3xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent mb-2">
+            Loading...
+          </h1>
+          <p id="profileEmail" class="text-gray-600 mb-3">email@example.com</p>
+          <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+            <span class="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
+              Member since <span id="memberSince">2025</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Settings Tabs -->
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 overflow-hidden">
+      
+      <!-- Tabs -->
+      <div class="border-b border-gray-200">
+        <nav class="flex space-x-8 px-6" aria-label="Tabs">
+          <button class="tab-btn border-b-2 border-primary-600 py-4 px-1 text-sm font-medium text-primary-600" data-tab="personal">
+            Personal Info
+          </button>
+          <button class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors" data-tab="preferences">
+            Preferences
+          </button>
+          <button class="tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors" data-tab="security">
+            Security
+          </button>
+        </nav>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="p-6">
+        
+        <!-- Personal Info Tab -->
+        <div id="personalTab" class="tab-content">
+          <form id="personalInfoForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <input id="fullName" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" placeholder="John Doe" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input id="email" type="email" disabled class="w-full px-4 py-2 border border-gray-300 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                <input id="phone" type="tel" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" placeholder="+1 (555) 123-4567" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
+                <input id="jobTitle" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" placeholder="Product Manager" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+              <textarea id="bio" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all" placeholder="Tell us about yourself..."></textarea>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <button type="button" id="cancelPersonalBtn" class="px-5 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" class="px-5 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Preferences Tab -->
+        <div id="preferencesTab" class="tab-content hidden">
+          <form id="preferencesForm" class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-3">Theme</label>
+              <div class="grid grid-cols-3 gap-4">
+                <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-500 transition-colors">
+                  <input type="radio" name="theme" value="light" checked class="mr-3" />
+                  <div>
+                    <div class="font-medium">☀️ Light</div>
+                    <div class="text-xs text-gray-500">Default theme</div>
+                  </div>
+                </label>
+                <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-500 transition-colors">
+                  <input type="radio" name="theme" value="dark" class="mr-3" />
+                  <div>
+                    <div class="font-medium">🌙 Dark</div>
+                    <div class="text-xs text-gray-500">Easy on eyes</div>
+                  </div>
+                </label>
+                <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-500 transition-colors">
+                  <input type="radio" name="theme" value="auto" class="mr-3" />
+                  <div>
+                    <div class="font-medium">🔄 Auto</div>
+                    <div class="text-xs text-gray-500">System default</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-3">Notifications</label>
+              <div class="space-y-3">
+                <label class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div>
+                    <div class="font-medium">Email Notifications</div>
+                    <div class="text-sm text-gray-500">Receive task reminders via email</div>
+                  </div>
+                  <input id="emailNotifications" type="checkbox" checked class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500" />
+                </label>
+                <label class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div>
+                    <div class="font-medium">Browser Notifications</div>
+                    <div class="text-sm text-gray-500">Get desktop notifications for reminders</div>
+                  </div>
+                  <input id="browserNotifications" type="checkbox" checked class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500" />
+                </label>
+                <label class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div>
+                    <div class="font-medium">Task Completion Sounds</div>
+                    <div class="text-sm text-gray-500">Play sound when completing tasks</div>
+                  </div>
+                  <input id="completionSounds" type="checkbox" class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500" />
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Default Task View</label>
+              <select id="defaultView" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <option value="list">List View</option>
+                <option value="cards">Card View</option>
+                <option value="compact">Compact View</option>
+              </select>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <button type="button" id="cancelPreferencesBtn" class="px-5 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" class="px-5 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+                Save Preferences
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Security Tab -->
+        <div id="securityTab" class="tab-content hidden">
+          <div class="space-y-6">
+            
+            <!-- Change Password -->
+            <div class="border-b border-gray-200 pb-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Change Password</h3>
+              <form id="passwordForm" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                  <input id="currentPassword" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                  <input id="newPassword" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                  <input id="confirmPassword" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
+                </div>
+                <button type="submit" class="px-5 py-2 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-colors">
+                  Update Password
+                </button>
+              </form>
+            </div>
+
+            <!-- Account Actions -->
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Actions</h3>
+              <div class="space-y-3">
+                <button id="exportDataBtn" class="w-full flex items-center justify-between p-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <div class="text-left">
+                      <div class="font-medium">Export Your Data</div>
+                      <div class="text-sm text-gray-500">Download all your tasks and data</div>
+                    </div>
+                  </div>
+                  <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+
+                <button id="deleteAccountBtn" class="w-full flex items-center justify-between p-4 border-2 border-red-200 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    <div class="text-left">
+                      <div class="font-medium text-red-700">Delete Account</div>
+                      <div class="text-sm text-red-600">Permanently delete your account and all data</div>
+                    </div>
+                  </div>
+                  <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Delete Account Confirmation Modal -->
+  <div id="deleteAccountModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl w-11/12 max-w-md p-6 shadow-2xl">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+          <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-gray-900">Delete Account</h3>
+          <p class="text-sm text-gray-600">This action cannot be undone</p>
+        </div>
+      </div>
+      
+      <p class="text-gray-700 mb-4">Are you absolutely sure you want to delete your account? All your tasks, lists, and data will be permanently deleted.</p>
+      
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+        <p class="text-sm text-yellow-800">Type <strong>DELETE</strong> to confirm:</p>
+        <input id="deleteConfirmInput" type="text" class="w-full mt-2 px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500" placeholder="Type DELETE" />
+      </div>
+
+      <div class="flex gap-3">
+        <button id="cancelDeleteBtn" class="flex-1 px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+          Cancel
+        </button>
+        <button id="confirmDeleteBtn" disabled class="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          Delete Forever
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="src/js/profile.js"></script>
+</body>
+</html>
