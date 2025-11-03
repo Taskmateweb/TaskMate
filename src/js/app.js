@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       profileEmailEl.textContent = user.email;
     }
 
+    // Update profile picture in header
+    updateProfilePicture(user);
+
     // Initialize app with Firebase data
     await initializeApp();
   });
@@ -670,3 +673,31 @@ if (logoutBtn) {
 
   } // End of initializeApp function
 });
+
+// Update profile picture in header
+function updateProfilePicture(user) {
+  const profileBtn = document.getElementById('profileBtn');
+  if (!profileBtn) return;
+
+  const iconContainer = profileBtn.querySelector('.h-8');
+  if (!iconContainer) return;
+
+  if (user.photoURL) {
+    // Show actual profile picture
+    iconContainer.innerHTML = `<img src="${user.photoURL}" alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-100" />`;
+  } else if (user.displayName) {
+    // Show initials
+    const initials = getUserInitials(user.displayName);
+    iconContainer.innerHTML = `<span class="text-sm font-semibold text-white">${initials}</span>`;
+  }
+}
+
+// Get user initials
+function getUserInitials(name) {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+}

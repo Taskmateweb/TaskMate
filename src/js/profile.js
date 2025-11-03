@@ -80,17 +80,20 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update Firebase Auth profile
       await updateProfile(user, { photoURL });
 
-      // Update Firestore profile
+      // Update Firestore profile (use setDoc with merge to create if not exists)
       const profileRef = doc(db, 'users', user.uid, 'profile', 'data');
-      await updateDoc(profileRef, { photoURL });
+      await setDoc(profileRef, { 
+        photoURL,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
 
       // Update preview
-      profilePicturePreview.innerHTML = `<img src="${photoURL}" alt="Profile" class="w-32 h-32 rounded-full object-cover" />`;
+      profilePicturePreview.innerHTML = `<img src="${photoURL}" alt="Profile" class="w-24 h-24 rounded-full object-cover" />`;
 
       // Reset button
-      uploadPhotoBtn.innerHTML = '<svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+      uploadPhotoBtn.innerHTML = '<svg class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
 
-      alert('Profile picture updated successfully!');
+      showNotification('Profile picture updated successfully!', 'success');
     } catch (error) {
       console.error('Error uploading photo:', error);
       alert('Failed to upload photo. Please try again.');
@@ -103,6 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
   personalInfoForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    // Show loading state
+    const submitBtn = personalInfoForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<svg class="w-5 h-5 animate-spin inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Saving...';
+    
     try {
       const user = auth.currentUser;
       if (!user) return;
@@ -112,6 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const jobTitle = document.getElementById('jobTitle').value.trim();
       const bio = document.getElementById('bio').value.trim();
 
+      // Validate phone number if provided
+      if (phone && !/^[\d\s\+\-\(\)]+$/.test(phone)) {
+        showNotification('Please enter a valid phone number', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+      }
+
       // Update Firebase Auth display name
       if (fullName) {
         await updateProfile(user, { displayName: fullName });
@@ -119,6 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update Firestore profile
       const profileRef = doc(db, 'users', user.uid, 'profile', 'data');
+      console.log('Saving profile to:', `users/${user.uid}/profile/data`);
+      console.log('Profile data:', { fullName, phone, jobTitle, bio });
+      
       await setDoc(profileRef, {
         fullName,
         phone,
@@ -127,13 +147,21 @@ document.addEventListener('DOMContentLoaded', () => {
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
+      console.log('✅ Profile saved successfully!');
+
       // Update display
       document.getElementById('profileDisplayName').textContent = fullName || 'User';
 
-      alert('Profile updated successfully!');
+      showNotification('Profile updated successfully!', 'success');
+      
+      // Reset button
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      showNotification('Failed to update profile. Please try again.', 'error');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
     }
   });
 
@@ -163,10 +191,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updatedAt: new Date().toISOString()
       });
 
-      // Apply theme immediately (you can implement this later)
+      // Apply theme immediately
       localStorage.setItem('theme', theme);
+      applyTheme(theme);
 
-      alert('Preferences saved successfully!');
+      showNotification('Preferences saved successfully!', 'success');
     } catch (error) {
       console.error('Error saving preferences:', error);
       alert('Failed to save preferences. Please try again.');
@@ -334,17 +363,16 @@ async function loadUserProfile(user) {
       document.getElementById('profileDisplayName').textContent = 'User';
     }
 
-    // Set member since
-    const creationTime = user.metadata.creationTime;
-    if (creationTime) {
-      const year = new Date(creationTime).getFullYear();
-      document.getElementById('memberSince').textContent = year;
-    }
-
-    // Set profile picture
+    // Set profile picture with initials fallback
     if (user.photoURL) {
       document.getElementById('profilePicturePreview').innerHTML = 
-        `<img src="${user.photoURL}" alt="Profile" class="w-32 h-32 rounded-full object-cover" />`;
+        `<img src="${user.photoURL}" alt="Profile" class="w-24 h-24 rounded-full object-cover" />`;
+    } else if (user.displayName) {
+      const initials = getUserInitials(user.displayName);
+      document.getElementById('profilePicturePreview').innerHTML = 
+        `<div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center ring-4 ring-primary-100">
+          <span class="text-2xl font-bold text-white">${initials}</span>
+        </div>`;
     }
 
     // Load profile data from Firestore
@@ -386,5 +414,62 @@ async function loadUserProfile(user) {
 
   } catch (error) {
     console.error('Error loading profile:', error);
+    showNotification('Failed to load profile data', 'error');
   }
 }
+
+
+
+// Show notification
+function showNotification(message, type = 'success') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `fixed top-20 right-4 z-50 px-6 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-x-0 ${
+    type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+  } text-white font-medium flex items-center gap-2`;
+  
+  // Add icon
+  const icon = type === 'success' 
+    ? '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    : type === 'error'
+    ? '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    : '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+  
+  notification.innerHTML = icon + '<span>' + message + '</span>';
+  document.body.appendChild(notification);
+
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    notification.style.transform = 'translateX(400px)';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
+// Apply theme
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else if (theme === 'light') {
+    document.documentElement.classList.remove('dark');
+  } else if (theme === 'auto') {
+    // Check system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (prefersDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+}
+
+// Get user initials for avatar
+function getUserInitials(name) {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+}
+
+
