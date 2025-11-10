@@ -7,6 +7,8 @@ module.exports = {
     "./dashboard.html",
     "./login.html",
     "./register.html",
+    "./reports.html",
+    "./calendar.html",
     "./privacy.html",
     "./terms.html",
     "./src/**/*.{html,js}"

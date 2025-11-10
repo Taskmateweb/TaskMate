@@ -77,20 +77,23 @@ class Reports {
     try {
       if (!this.user) return;
 
+      console.log(`Loading reports for period: ${this.currentPeriod}`);
       const dateRange = this.getDateRange(this.currentPeriod);
+      console.log('Date range:', { start: dateRange.start, end: dateRange.end });
       
       const [tasks, focusSessions] = await Promise.all([
         this.loadTasks(this.user.uid, dateRange),
         this.loadFocusSessions(this.user.uid, dateRange)
       ]);
 
-      this.displayStats(tasks, focusSessions);
+      this.displayStats(tasks, focusSessions, dateRange);
       this.renderCharts(tasks, focusSessions, dateRange);
-      this.displayRecentActivity(tasks, focusSessions);
-      this.generateInsights(tasks, focusSessions);
+      this.displayRecentActivity(tasks, focusSessions, dateRange);
+      this.generateInsights(tasks, focusSessions, dateRange);
       
     } catch (error) {
       console.error('Error loading reports:', error);
+      alert('Error loading reports. Check console for details.');
     }
   }
 
@@ -124,19 +127,21 @@ class Reports {
 
   async loadTasks(userId, dateRange) {
     try {
+      // Load ALL user tasks, we'll filter by completion date later
       const tasksQuery = query(
         collection(db, 'tasks'),
-        where('userId', '==', userId),
-        where('createdAt', '>=', Timestamp.fromDate(dateRange.start))
+        where('userId', '==', userId)
       );
 
       const snapshot = await getDocs(tasksQuery);
       const tasks = [];
       
       snapshot.forEach(doc => {
-        tasks.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        tasks.push({ id: doc.id, ...data });
       });
 
+      console.log(`Loaded ${tasks.length} total tasks for reports`);
       return tasks;
     } catch (error) {
       console.error('Error loading tasks:', error);
@@ -146,20 +151,21 @@ class Reports {
 
   async loadFocusSessions(userId, dateRange) {
     try {
+      // Load ALL focus sessions for the user
       const sessionsQuery = query(
         collection(db, 'focusSessions'),
-        where('userId', '==', userId),
-        where('createdAt', '>=', Timestamp.fromDate(dateRange.start)),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', userId)
       );
 
       const snapshot = await getDocs(sessionsQuery);
       const sessions = [];
       
       snapshot.forEach(doc => {
-        sessions.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        sessions.push({ id: doc.id, ...data });
       });
 
+      console.log(`Loaded ${sessions.length} focus sessions for reports`);
       return sessions;
     } catch (error) {
       console.error('Error loading focus sessions:', error);
@@ -167,17 +173,40 @@ class Reports {
     }
   }
 
-  displayStats(tasks, focusSessions) {
-    const completedTasks = tasks.filter(t => t.completed).length;
-    const totalFocusTime = focusSessions.reduce((acc, s) => acc + (s.timeSpent || 0), 0);
+  displayStats(tasks, focusSessions, dateRange) {
+    // Filter tasks and sessions by the selected date range
+    const filteredTasks = tasks.filter(task => {
+      if (!task.createdAt) return false;
+      const createdDate = task.createdAt.toDate();
+      return createdDate >= dateRange.start && createdDate <= dateRange.end;
+    });
+    
+    const filteredSessions = focusSessions.filter(session => {
+      if (!session.startTime && !session.createdAt) return false;
+      const sessionDate = (session.startTime || session.createdAt).toDate();
+      return sessionDate >= dateRange.start && sessionDate <= dateRange.end;
+    });
+    
+    const completedTasks = filteredTasks.filter(t => t.completed || t.status === 'Done').length;
+    const totalTasks = filteredTasks.length;
+    const totalFocusTime = filteredSessions.reduce((acc, s) => acc + (s.timeSpent || 0), 0);
     const hours = Math.floor(totalFocusTime / 3600);
     const minutes = Math.floor((totalFocusTime % 3600) / 60);
     
-    const completionRate = tasks.length > 0 
-      ? Math.round((completedTasks / tasks.length) * 100) 
+    const completionRate = totalTasks > 0 
+      ? Math.round((completedTasks / totalTasks) * 100) 
       : 0;
     
-    const productivityScore = this.calculateProductivityScore(tasks, focusSessions);
+    const productivityScore = this.calculateProductivityScore(filteredTasks, filteredSessions);
+
+    console.log('Stats:', {
+      totalTasks,
+      completedTasks,
+      completionRate,
+      focusSessionCount: filteredSessions.length,
+      totalFocusTime: `${hours}h ${minutes}m`,
+      productivityScore
+    });
 
     const totalCompletedEl = document.getElementById('totalCompleted');
     const totalFocusTimeEl = document.getElementById('totalFocusTime');
@@ -188,6 +217,17 @@ class Reports {
     if (totalFocusTimeEl) totalFocusTimeEl.textContent = `${hours}h ${minutes}m`;
     if (completionRateEl) completionRateEl.textContent = `${completionRate}%`;
     if (productivityScoreEl) productivityScoreEl.textContent = productivityScore;
+    
+    // Update trend indicators
+    const completedTrend = document.getElementById('completedTrend');
+    const focusTrend = document.getElementById('focusTrend');
+    const rateTrend = document.getElementById('rateTrend');
+    const scoreTrend = document.getElementById('scoreTrend');
+    
+    if (completedTrend) completedTrend.textContent = `${totalTasks} total tasks`;
+    if (focusTrend) focusTrend.textContent = `${filteredSessions.length} sessions`;
+    if (rateTrend) rateTrend.textContent = completionRate >= 70 ? 'Excellent!' : completionRate >= 50 ? 'Good progress' : 'Keep going!';
+    if (scoreTrend) scoreTrend.textContent = productivityScore >= 70 ? 'High productivity' : productivityScore >= 40 ? 'Steady progress' : 'Building momentum';
   }
 
   calculateProductivityScore(tasks, focusSessions) {
@@ -268,9 +308,13 @@ class Reports {
     // Show message if no data
     if (!hasData) {
       const chartParent = ctx.parentElement;
+      // Remove any existing overlay first
+      const existingOverlay = chartParent.querySelector('.no-data-overlay');
+      if (existingOverlay) existingOverlay.remove();
+      
       if (!chartParent.querySelector('.no-data-overlay')) {
         const overlay = document.createElement('div');
-        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl';
+        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-10 pointer-events-none';
         overlay.innerHTML = `
           <div class="text-center p-6">
             <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -280,7 +324,9 @@ class Reports {
             <p class="text-sm text-gray-400 mt-1">Start completing tasks to see trends</p>
           </div>
         `;
-        chartParent.style.position = 'relative';
+        if (chartParent.style.position !== 'relative' && chartParent.style.position !== 'absolute') {
+          chartParent.style.position = 'relative';
+        }
         chartParent.appendChild(overlay);
       }
     } else {
@@ -345,9 +391,13 @@ class Reports {
     // Show message if no data
     if (!hasData) {
       const chartParent = ctx.parentElement;
+      // Remove any existing overlay first
+      const existingOverlay = chartParent.querySelector('.no-data-overlay');
+      if (existingOverlay) existingOverlay.remove();
+      
       if (!chartParent.querySelector('.no-data-overlay')) {
         const overlay = document.createElement('div');
-        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl';
+        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-10 pointer-events-none';
         overlay.innerHTML = `
           <div class="text-center p-6">
             <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -357,7 +407,9 @@ class Reports {
             <p class="text-sm text-gray-400 mt-1">Start focus sessions to track your time</p>
           </div>
         `;
-        chartParent.style.position = 'relative';
+        if (chartParent.style.position !== 'relative' && chartParent.style.position !== 'absolute') {
+          chartParent.style.position = 'relative';
+        }
         chartParent.appendChild(overlay);
       }
     } else {
@@ -425,9 +477,13 @@ class Reports {
     // Show message if no data
     if (!hasData) {
       const chartParent = ctx.parentElement;
+      // Remove any existing overlay first
+      const existingOverlay = chartParent.querySelector('.no-data-overlay');
+      if (existingOverlay) existingOverlay.remove();
+      
       if (!chartParent.querySelector('.no-data-overlay')) {
         const overlay = document.createElement('div');
-        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl';
+        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-10 pointer-events-none';
         overlay.innerHTML = `
           <div class="text-center p-6">
             <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -437,7 +493,9 @@ class Reports {
             <p class="text-sm text-gray-400 mt-1">Create tasks to see distribution</p>
           </div>
         `;
-        chartParent.style.position = 'relative';
+        if (chartParent.style.position !== 'relative' && chartParent.style.position !== 'absolute') {
+          chartParent.style.position = 'relative';
+        }
         chartParent.appendChild(overlay);
       }
     } else {
@@ -510,9 +568,13 @@ class Reports {
     // Show message if no data
     if (!hasData) {
       const chartParent = ctx.parentElement;
+      // Remove any existing overlay first
+      const existingOverlay = chartParent.querySelector('.no-data-overlay');
+      if (existingOverlay) existingOverlay.remove();
+      
       if (!chartParent.querySelector('.no-data-overlay')) {
         const overlay = document.createElement('div');
-        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl';
+        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl z-10 pointer-events-none';
         overlay.innerHTML = `
           <div class="text-center p-6">
             <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -522,7 +584,9 @@ class Reports {
             <p class="text-sm text-gray-400 mt-1">Organize tasks into lists to see breakdown</p>
           </div>
         `;
-        chartParent.style.position = 'relative';
+        if (chartParent.style.position !== 'relative' && chartParent.style.position !== 'absolute') {
+          chartParent.style.position = 'relative';
+        }
         chartParent.appendChild(overlay);
       }
     } else {
@@ -544,51 +608,100 @@ class Reports {
     return days.slice(-14);
   }
 
-  displayRecentActivity(tasks, focusSessions) {
+  displayRecentActivity(tasks, focusSessions, dateRange) {
     const activityList = document.getElementById('activityList');
+    const activityCount = document.getElementById('activityCount');
+    
+    // Filter by date range
+    const filteredTasks = tasks.filter(t => {
+      if (!t.createdAt) return false;
+      const date = t.createdAt.toDate();
+      return date >= dateRange.start && date <= dateRange.end;
+    });
+    
+    const filteredSessions = focusSessions.filter(s => {
+      if (!s.startTime && !s.createdAt) return false;
+      const date = (s.startTime || s.createdAt).toDate();
+      return date >= dateRange.start && date <= dateRange.end;
+    });
     
     const activities = [];
     
-    tasks.filter(t => t.completed && t.completedAt).slice(0, 5).forEach(task => {
+    filteredTasks.filter(t => t.completed && t.completedAt).slice(0, 5).forEach(task => {
       activities.push({
         type: 'task',
         title: task.title,
         timestamp: task.completedAt?.toDate() || task.createdAt.toDate(),
+        priority: task.priority || 'Medium',
         icon: '✅',
-        color: 'green'
+        color: 'green',
+        bgColor: 'emerald'
       });
     });
     
-    focusSessions.slice(0, 5).forEach(session => {
+    filteredSessions.slice(0, 5).forEach(session => {
       activities.push({
         type: 'focus',
-        title: `Focus session: ${session.taskName}`,
-        timestamp: session.startTime.toDate(),
+        title: `Focus session: ${session.taskName || 'Untitled'}`,
+        timestamp: (session.startTime || session.createdAt).toDate(),
         duration: Math.floor((session.timeSpent || 0) / 60),
         icon: '⏱️',
-        color: 'purple'
+        color: 'purple',
+        bgColor: 'purple'
       });
     });
     
     activities.sort((a, b) => b.timestamp - a.timestamp);
     
+    if (activityCount) {
+      activityCount.textContent = `${activities.length} item${activities.length !== 1 ? 's' : ''}`;
+    }
+    
     if (activities.length === 0) {
-      activityList.innerHTML = '<p class="text-gray-500 text-center py-8">No recent activity</p>';
+      activityList.innerHTML = `
+        <div class="text-center py-12">
+          <svg class="w-20 h-20 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <p class="text-gray-500 text-lg font-medium">No recent activity</p>
+          <p class="text-gray-400 text-sm mt-2">Complete tasks or start focus sessions to see them here</p>
+        </div>
+      `;
       return;
     }
 
-    activityList.innerHTML = activities.slice(0, 10).map(activity => {
+    activityList.innerHTML = activities.slice(0, 10).map((activity, index) => {
       const timeAgo = this.getTimeAgo(activity.timestamp);
+      const priorityColors = {
+        High: 'bg-red-100 text-red-700',
+        Medium: 'bg-yellow-100 text-yellow-700',
+        Low: 'bg-green-100 text-green-700'
+      };
+      
       return `
-        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all">
-          <div class="w-10 h-10 rounded-lg bg-${activity.color}-100 flex items-center justify-center text-xl flex-shrink-0">
+        <div class="activity-card flex items-start gap-4 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:border-${activity.color}-200 hover:shadow-md cursor-pointer" style="animation-delay: ${index * 0.1}s;">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-${activity.bgColor}-100 to-${activity.bgColor}-200 flex items-center justify-center text-2xl flex-shrink-0 shadow-sm">
             ${activity.icon}
           </div>
-          <div class="flex-1">
-            <div class="font-semibold text-gray-900">${activity.title}</div>
-            <div class="text-sm text-gray-600 mt-1">
-              ${timeAgo}
-              ${activity.duration ? ` • ${activity.duration} minutes` : ''}
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+              <div class="font-semibold text-gray-900 truncate">${activity.title}</div>
+              ${activity.priority ? `<span class="text-xs px-2 py-1 rounded-lg ${priorityColors[activity.priority] || ''} whitespace-nowrap">${activity.priority}</span>` : ''}
+            </div>
+            <div class="flex items-center gap-2 mt-2 text-sm text-gray-600">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>${timeAgo}</span>
+              ${activity.duration ? `
+                <span class="flex items-center gap-1">
+                  <span class="w-1 h-1 rounded-full bg-gray-400"></span>
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>${activity.duration} min</span>
+                </span>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -596,23 +709,37 @@ class Reports {
     }).join('');
   }
 
-  generateInsights(tasks, focusSessions) {
+  generateInsights(tasks, focusSessions, dateRange) {
     const insightsList = document.getElementById('insightsList');
+    
+    // Filter by date range
+    const filteredTasks = tasks.filter(t => {
+      if (!t.createdAt) return false;
+      const date = t.createdAt.toDate();
+      return date >= dateRange.start && date <= dateRange.end;
+    });
+    
+    const filteredSessions = focusSessions.filter(s => {
+      if (!s.startTime && !s.createdAt) return false;
+      const date = (s.startTime || s.createdAt).toDate();
+      return date >= dateRange.start && date <= dateRange.end;
+    });
+    
     const insights = [];
 
-    const completedTasks = tasks.filter(t => t.completed).length;
-    const completionRate = tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0;
+    const completedTasks = filteredTasks.filter(t => t.completed || t.status === 'Done').length;
+    const completionRate = filteredTasks.length > 0 ? (completedTasks / filteredTasks.length) * 100 : 0;
 
     if (completionRate > 80) {
       insights.push('🎉 Excellent! Your completion rate is over 80%. Keep up the great work!');
     } else if (completionRate > 50) {
       insights.push('👍 Good progress! You\'re completing more than half of your tasks.');
-    } else if (tasks.length > 0) {
+    } else if (filteredTasks.length > 0) {
       insights.push('💡 Try breaking down larger tasks into smaller, manageable steps to improve completion rate.');
     }
 
-    const avgFocusTime = focusSessions.length > 0 
-      ? focusSessions.reduce((acc, s) => acc + (s.timeSpent || 0), 0) / focusSessions.length / 60
+    const avgFocusTime = filteredSessions.length > 0 
+      ? filteredSessions.reduce((acc, s) => acc + (s.timeSpent || 0), 0) / filteredSessions.length / 60
       : 0;
 
     if (avgFocusTime > 30) {
@@ -621,29 +748,72 @@ class Reports {
       insights.push('⏰ Consider longer focus sessions (25-45 minutes) for better productivity.');
     }
 
-    const highPriorityTasks = tasks.filter(t => t.priority === 'High' && !t.completed).length;
+    const highPriorityTasks = filteredTasks.filter(t => t.priority === 'High' && !t.completed).length;
     if (highPriorityTasks > 0) {
       insights.push(`🎯 You have ${highPriorityTasks} high-priority ${highPriorityTasks === 1 ? 'task' : 'tasks'} pending. Focus on these first!`);
     }
 
-    if (focusSessions.length > 0) {
-      const completedSessions = focusSessions.filter(s => s.completed).length;
-      const sessionCompletionRate = (completedSessions / focusSessions.length) * 100;
+    if (filteredSessions.length > 0) {
+      const completedSessions = filteredSessions.filter(s => s.completed).length;
+      const sessionCompletionRate = (completedSessions / filteredSessions.length) * 100;
       if (sessionCompletionRate > 80) {
         insights.push('🏆 You\'re completing most of your focus sessions! Great discipline!');
       }
     }
 
     if (insights.length === 0) {
-      insights.push('💪 Start adding tasks and focus sessions to get personalized insights!');
+      insights.push({
+        icon: '💪',
+        title: 'Get Started',
+        message: 'Start adding tasks and focus sessions to get personalized insights!'
+      });
+      insights.push({
+        icon: '📊',
+        title: 'Track Progress',
+        message: 'Complete tasks to see your productivity trends and patterns.'
+      });
+      insights.push({
+        icon: '🎯',
+        title: 'Stay Focused',
+        message: 'Use focus sessions to improve concentration and track deep work.'
+      });
+    } else {
+      // Convert simple insights to structured format
+      insights = insights.map(text => {
+        const parts = text.split(' ', 1);
+        const icon = parts[0];
+        const message = text.substring(icon.length + 1);
+        
+        return {
+          icon: icon,
+          title: this.getInsightTitle(message),
+          message: message
+        };
+      });
     }
 
-    insightsList.innerHTML = insights.map(insight => `
-      <div class="flex items-start gap-3 bg-white/10 backdrop-blur-sm rounded-xl p-4">
-        <div class="text-xl">💡</div>
-        <p class="flex-1">${insight}</p>
+    insightsList.innerHTML = insights.map((insight, index) => `
+      <div class="insight-card flex items-start gap-4 bg-white/20 backdrop-blur-md rounded-2xl p-5 border border-white/30 hover:bg-white/30 transition-all cursor-pointer group">
+        <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition-transform">
+          ${insight.icon}
+        </div>
+        <div class="flex-1">
+          <div class="font-bold text-lg mb-1 text-white">${insight.title}</div>
+          <p class="text-white/90 text-sm leading-relaxed">${insight.message}</p>
+        </div>
       </div>
     `).join('');
+  }
+  
+  getInsightTitle(message) {
+    if (message.includes('completion rate') && message.includes('80')) return 'Outstanding Performance';
+    if (message.includes('completion rate') && message.includes('50')) return 'Good Progress';
+    if (message.includes('breaking down')) return 'Improve Completion';
+    if (message.includes('average focus') && message.includes('30')) return 'Excellent Focus';
+    if (message.includes('longer focus')) return 'Optimize Focus Time';
+    if (message.includes('high-priority')) return 'Priority Alert';
+    if (message.includes('completing most')) return 'Great Discipline';
+    return 'Productivity Tip';
   }
 
   getTimeAgo(date) {
