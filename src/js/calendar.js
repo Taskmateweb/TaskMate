@@ -1,6 +1,6 @@
 // src/js/calendar.js - Calendar page functionality
 import { auth } from './firebase-config.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { 
   collection, 
   addDoc, 
@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
       profileEmail.textContent = user.email;
     }
 
+    // Update profile picture in header
+    updateProfilePicture(user);
+
     // Initialize calendar
     await initializeCalendar(user.uid);
   });
@@ -40,10 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
       try {
-        await auth.signOut();
-        window.location.href = 'login.html';
+        await signOut(auth);
+        window.location.href = 'index.html';
       } catch (error) {
         console.error('Logout error:', error);
+        alert('Failed to logout. Please try again.');
       }
     });
   }
@@ -570,4 +574,32 @@ async function initializeCalendar(userId) {
 
   // Initialize
   loadEvents();
+}
+
+// Update profile picture in header
+function updateProfilePicture(user) {
+  const profileBtn = document.getElementById('profileBtn');
+  if (!profileBtn) return;
+
+  const iconContainer = profileBtn.querySelector('.h-8');
+  if (!iconContainer) return;
+
+  if (user.photoURL) {
+    // Show actual profile picture
+    iconContainer.innerHTML = `<img src="${user.photoURL}" alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-100" />`;
+  } else if (user.displayName) {
+    // Show initials
+    const initials = getUserInitials(user.displayName);
+    iconContainer.innerHTML = `<span class="text-sm font-semibold text-white">${initials}</span>`;
+  }
+}
+
+// Get user initials
+function getUserInitials(name) {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
 }
