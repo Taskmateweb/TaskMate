@@ -1,6 +1,7 @@
 // src/js/app.js
 import { auth } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { tasksService, listsService } from './db.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -32,6 +33,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initializeApp();
   });
 
+  // Migrate old completed tasks that don't have completedAt timestamp
+  async function migrateOldCompletedTasks(tasks) {
+    try {
+      const tasksToUpdate = tasks.filter(task => 
+        (task.status === 'Done' || task.completed === true) && !task.completedAt
+      );
+      
+      if (tasksToUpdate.length > 0) {
+        console.log(`Migrating ${tasksToUpdate.length} old completed tasks...`);
+        
+        for (const task of tasksToUpdate) {
+          try {
+            // Use createdAt as a fallback for completedAt, or current time
+            const completedTime = task.createdAt || Timestamp.now();
+            
+            await tasksService.updateTask(task.id, {
+              completed: true,
+              completedAt: completedTime
+            });
+            
+            task.completed = true;
+            task.completedAt = completedTime;
+          } catch (err) {
+            console.error(`Error migrating task ${task.id}:`, err);
+          }
+        }
+        
+        console.log('Migration complete!');
+      }
+    } catch (error) {
+      console.error('Error during migration:', error);
+    }
+  }
+
   async function initializeApp() {
     // --- LOAD DATA FROM FIREBASE ---
     let tasks = [];
@@ -40,6 +75,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       tasks = await tasksService.getAllTasks();
       lists = await listsService.getAllLists();
+      
+      // Migrate old completed tasks to add completedAt timestamp
+      await migrateOldCompletedTasks(tasks);
     } catch (error) {
       console.error('Error loading data:', error);
       tasks = [];
@@ -504,8 +542,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const newStatus = t.status === 'To Do' ? 'In Progress' : t.status === 'In Progress' ? 'Done' : 'To Do';
     
     try {
-      await tasksService.updateTask(id, { status: newStatus });
+      const updateData = { status: newStatus };
+      
+      // If marking as Done, add completion tracking
+      if (newStatus === 'Done') {
+        updateData.completed = true;
+        updateData.completedAt = Timestamp.now();
+      } else {
+        // If changing from Done to another status, remove completion tracking
+        updateData.completed = false;
+        updateData.completedAt = null;
+      }
+      
+      await tasksService.updateTask(id, updateData);
       t.status = newStatus;
+      t.completed = updateData.completed;
+      t.completedAt = updateData.completedAt;
+      
+      // Show congratulations when marking as Done
+      if (newStatus === 'Done') {
+        showCongrats();
+      }
+      
       renderTasks();
       if (newStatus === 'Done') {
         showCongrats(t.title || 'Task');
@@ -521,8 +579,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!t) return;
     
     try {
-      await tasksService.updateTask(id, { status: 'Done' });
+      await tasksService.updateTask(id, { 
+        status: 'Done',
+        completed: true,
+        completedAt: Timestamp.now()
+      });
       t.status = 'Done';
+      t.completed = true;
+      t.completedAt = Timestamp.now();
+      
+      // Show congratulations
+      showCongrats();
+      
       renderTasks();
       showCongrats(t.title || 'Task');
     } catch (error) {
