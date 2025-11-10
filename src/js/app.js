@@ -385,6 +385,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const priority = (newTaskPriority && newTaskPriority.value) || 'Medium';
       const description = (newTaskDescription && newTaskDescription.value.trim()) || '';
 
+      // Validate that due date is provided
+      if (!due) {
+        alert('Please select a due date for the task.');
+        if (newTaskDue) newTaskDue.focus();
+        return;
+      }
+
       // If new list entered and not already exist, add to lists
       if (list && !lists.includes(list)) {
         lists.unshift(list);
