@@ -179,10 +179,15 @@ class Reports {
     
     const productivityScore = this.calculateProductivityScore(tasks, focusSessions);
 
-    document.getElementById('totalCompleted').textContent = completedTasks;
-    document.getElementById('totalFocusTime').textContent = `${hours}h ${minutes}m`;
-    document.getElementById('completionRate').textContent = `${completionRate}%`;
-    document.getElementById('productivityScore').textContent = productivityScore;
+    const totalCompletedEl = document.getElementById('totalCompleted');
+    const totalFocusTimeEl = document.getElementById('totalFocusTime');
+    const completionRateEl = document.getElementById('completionRate');
+    const productivityScoreEl = document.getElementById('productivityScore');
+
+    if (totalCompletedEl) totalCompletedEl.textContent = completedTasks;
+    if (totalFocusTimeEl) totalFocusTimeEl.textContent = `${hours}h ${minutes}m`;
+    if (completionRateEl) completionRateEl.textContent = `${completionRate}%`;
+    if (productivityScoreEl) productivityScoreEl.textContent = productivityScore;
   }
 
   calculateProductivityScore(tasks, focusSessions) {
@@ -225,15 +230,19 @@ class Reports {
       }).length;
     });
 
+    // If no data, show sample data
+    const hasData = completionData.some(val => val > 0);
+    const displayData = hasData ? completionData : [0, 1, 0, 2, 1, 0, 0];
+
     this.charts.completionTrend = new Chart(ctx, {
       type: 'line',
       data: {
         labels: days.map(d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
         datasets: [{
           label: 'Tasks Completed',
-          data: completionData,
-          borderColor: 'rgb(34, 197, 94)',
-          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          data: displayData,
+          borderColor: hasData ? 'rgb(34, 197, 94)' : 'rgba(34, 197, 94, 0.3)',
+          backgroundColor: hasData ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.05)',
           fill: true,
           tension: 0.4
         }]
@@ -242,7 +251,10 @@ class Reports {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          tooltip: {
+            enabled: hasData
+          }
         },
         scales: {
           y: { 
@@ -252,6 +264,30 @@ class Reports {
         }
       }
     });
+
+    // Show message if no data
+    if (!hasData) {
+      const chartParent = ctx.parentElement;
+      if (!chartParent.querySelector('.no-data-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl';
+        overlay.innerHTML = `
+          <div class="text-center p-6">
+            <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <p class="text-gray-600 font-medium">No task completion data yet</p>
+            <p class="text-sm text-gray-400 mt-1">Start completing tasks to see trends</p>
+          </div>
+        `;
+        chartParent.style.position = 'relative';
+        chartParent.appendChild(overlay);
+      }
+    } else {
+      // Remove overlay if data exists
+      const overlay = ctx.parentElement.querySelector('.no-data-overlay');
+      if (overlay) overlay.remove();
+    }
   }
 
   renderFocusSessionsChart(focusSessions, dateRange) {
@@ -271,15 +307,19 @@ class Reports {
       return sessions.reduce((acc, s) => acc + (s.timeSpent || 0) / 60, 0);
     });
 
+    // If no data, show sample data
+    const hasData = sessionData.some(val => val > 0);
+    const displayData = hasData ? sessionData : [0, 25, 0, 45, 30, 0, 0];
+
     this.charts.focusSessions = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: days.map(d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
         datasets: [{
           label: 'Focus Time (minutes)',
-          data: sessionData,
-          backgroundColor: 'rgba(147, 51, 234, 0.8)',
-          borderColor: 'rgb(147, 51, 234)',
+          data: displayData,
+          backgroundColor: hasData ? 'rgba(147, 51, 234, 0.8)' : 'rgba(147, 51, 234, 0.3)',
+          borderColor: hasData ? 'rgb(147, 51, 234)' : 'rgba(147, 51, 234, 0.5)',
           borderWidth: 2,
           borderRadius: 8
         }]
@@ -288,7 +328,10 @@ class Reports {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          tooltip: {
+            enabled: hasData
+          }
         },
         scales: {
           y: { 
@@ -298,6 +341,29 @@ class Reports {
         }
       }
     });
+
+    // Show message if no data
+    if (!hasData) {
+      const chartParent = ctx.parentElement;
+      if (!chartParent.querySelector('.no-data-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl';
+        overlay.innerHTML = `
+          <div class="text-center p-6">
+            <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-gray-600 font-medium">No focus session data yet</p>
+            <p class="text-sm text-gray-400 mt-1">Start focus sessions to track your time</p>
+          </div>
+        `;
+        chartParent.style.position = 'relative';
+        chartParent.appendChild(overlay);
+      }
+    } else {
+      const overlay = ctx.parentElement.querySelector('.no-data-overlay');
+      if (overlay) overlay.remove();
+    }
   }
 
   renderPriorityChart(tasks) {
@@ -314,16 +380,25 @@ class Reports {
       priorities[priority]++;
     });
 
+    const hasData = tasks.length > 0;
+    const displayData = hasData ? 
+      [priorities.High, priorities.Medium, priorities.Low] : 
+      [2, 5, 3];
+
     this.charts.priority = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: ['High Priority', 'Medium Priority', 'Low Priority'],
         datasets: [{
-          data: [priorities.High, priorities.Medium, priorities.Low],
-          backgroundColor: [
+          data: displayData,
+          backgroundColor: hasData ? [
             'rgba(239, 68, 68, 0.8)',
             'rgba(251, 146, 60, 0.8)',
             'rgba(34, 197, 94, 0.8)'
+          ] : [
+            'rgba(239, 68, 68, 0.3)',
+            'rgba(251, 146, 60, 0.3)',
+            'rgba(34, 197, 94, 0.3)'
           ],
           borderWidth: 3,
           borderColor: '#fff'
@@ -339,10 +414,36 @@ class Reports {
               padding: 15,
               font: { size: 12 }
             }
+          },
+          tooltip: {
+            enabled: hasData
           }
         }
       }
     });
+
+    // Show message if no data
+    if (!hasData) {
+      const chartParent = ctx.parentElement;
+      if (!chartParent.querySelector('.no-data-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl';
+        overlay.innerHTML = `
+          <div class="text-center p-6">
+            <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+            </svg>
+            <p class="text-gray-600 font-medium">No priority data yet</p>
+            <p class="text-sm text-gray-400 mt-1">Create tasks to see distribution</p>
+          </div>
+        `;
+        chartParent.style.position = 'relative';
+        chartParent.appendChild(overlay);
+      }
+    } else {
+      const overlay = ctx.parentElement.querySelector('.no-data-overlay');
+      if (overlay) overlay.remove();
+    }
   }
 
   renderCategoryChart(tasks) {
@@ -362,18 +463,27 @@ class Reports {
     const labels = Object.keys(categories).slice(0, 5);
     const data = Object.values(categories).slice(0, 5);
 
+    const hasData = tasks.length > 0;
+    const displayLabels = hasData && labels.length > 0 ? labels : ['Work', 'Personal', 'Study', 'Other'];
+    const displayData = hasData && data.length > 0 ? data : [3, 5, 2, 2];
+
     this.charts.category = new Chart(ctx, {
       type: 'polarArea',
       data: {
-        labels: labels,
+        labels: displayLabels,
         datasets: [{
-          data: data,
-          backgroundColor: [
+          data: displayData,
+          backgroundColor: hasData ? [
             'rgba(59, 130, 246, 0.7)',
             'rgba(147, 51, 234, 0.7)',
             'rgba(236, 72, 153, 0.7)',
             'rgba(34, 197, 94, 0.7)',
             'rgba(251, 146, 60, 0.7)'
+          ] : [
+            'rgba(59, 130, 246, 0.3)',
+            'rgba(147, 51, 234, 0.3)',
+            'rgba(236, 72, 153, 0.3)',
+            'rgba(34, 197, 94, 0.3)'
           ],
           borderWidth: 2,
           borderColor: '#fff'
@@ -389,10 +499,36 @@ class Reports {
               padding: 15,
               font: { size: 12 }
             }
+          },
+          tooltip: {
+            enabled: hasData
           }
         }
       }
     });
+
+    // Show message if no data
+    if (!hasData) {
+      const chartParent = ctx.parentElement;
+      if (!chartParent.querySelector('.no-data-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'no-data-overlay absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl';
+        overlay.innerHTML = `
+          <div class="text-center p-6">
+            <svg class="w-16 h-16 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+            </svg>
+            <p class="text-gray-600 font-medium">No category data yet</p>
+            <p class="text-sm text-gray-400 mt-1">Organize tasks into lists to see breakdown</p>
+          </div>
+        `;
+        chartParent.style.position = 'relative';
+        chartParent.appendChild(overlay);
+      }
+    } else {
+      const overlay = ctx.parentElement.querySelector('.no-data-overlay');
+      if (overlay) overlay.remove();
+    }
   }
 
   getDaysInRange(dateRange) {
