@@ -66,14 +66,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const completedTasksEl = $('completedTasks');
 
   const editModal = $('editModal'); // used by existing edit flow
-  const focusCard = $('focusCard');
-  const focusModal = $('focusModal');
-  const focusTaskSelect = $('focusTaskSelect');
-  const focusMinutes = $('focusMinutes');
-  const focusTimerDisplay = $('focusTimerDisplay');
-  const startFocusBtn = $('startFocusBtn');
-  const stopFocusBtn = $('stopFocusBtn');
-  const closeFocusModal = $('closeFocusModal');
 
   const taskDetailsModal = $('taskDetailsModal');
   const detailTitle = $('detailTitle');
@@ -575,43 +567,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderFocusTaskOptions() {
     if (!focusTaskSelect) return;
     focusTaskSelect.innerHTML = tasks.map(t => `<option value="${t.id}">${escapeHtml(t.title)} — ${escapeHtml(t.list)}</option>`).join('');
-  }
-  if (focusCard && focusModal) {
-    focusCard.addEventListener('click', () => {
-      focusModal.classList.remove('hidden');
-      focusModal.classList.add('flex','items-center','justify-center');
-      renderFocusTaskOptions();
-    });
-  }
-  if (closeFocusModal) closeFocusModal.addEventListener('click', () => { focusModal.classList.add('hidden'); focusModal.classList.remove('flex'); stopTimer(); });
-
-  if (startFocusBtn) {
-    startFocusBtn.addEventListener('click', () => {
-      const minutes = Math.max(1, Number(focusMinutes && focusMinutes.value) || 25);
-      startTimer(minutes * 60);
-      startFocusBtn.classList.add('hidden');
-      stopFocusBtn.classList.remove('hidden');
-    });
-  }
-  if (stopFocusBtn) stopFocusBtn.addEventListener('click', () => { stopTimer(); startFocusBtn.classList.remove('hidden'); stopFocusBtn.classList.add('hidden'); });
-
-  function startTimer(seconds) {
-    timerRemaining = seconds;
-    updateTimerDisplay(timerRemaining);
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      timerRemaining--;
-      updateTimerDisplay(timerRemaining);
-      if (timerRemaining <= 0) { clearInterval(timerInterval); focusTimerDisplay.textContent = 'Completed!'; }
-    }, 1000);
-  }
-  function stopTimer() { clearInterval(timerInterval); timerRemaining = 0; updateTimerDisplay(0); }
-  function updateTimerDisplay(sec) {
-    if (!focusTimerDisplay) return;
-    if (sec <= 0) { focusTimerDisplay.textContent = '00:00'; return; }
-    const m = Math.floor(sec/60).toString().padStart(2,'0');
-    const s = (sec%60).toString().padStart(2,'0');
-    focusTimerDisplay.textContent = `${m}:${s}`;
   }
 
   // --- Profile dropdown (modern) ---
