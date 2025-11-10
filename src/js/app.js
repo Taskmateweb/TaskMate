@@ -120,6 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   let notificationCheckInterval = null;
   let notifiedTasks = new Set(); // Track which tasks we've already notified about
+  let autoDeleteInterval = null; // Track auto-delete interval
 
   // Save state to Firebase
   async function saveAll() {
@@ -202,6 +203,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderTasks(filterList = null, query = '') {
     if (!tasksContainer) return;
     let items = tasks.slice();
+
+    // Filter out completed tasks older than 24 hours (hide from dashboard, keep in database)
+    const now = new Date();
+    const twentyFourHoursAgo = now.getTime() - (24 * 60 * 60 * 1000);
+    items = items.filter(task => {
+      if (task.status === 'Done' && task.completedAt) {
+        const completedTime = new Date(task.completedAt).getTime();
+        return completedTime > twentyFourHoursAgo; // Only show if completed less than 24 hours ago
+      }
+      return true; // Show all non-completed tasks
+    });
 
     if (filterList) items = items.filter(t => t.list === filterList);
     if (query) items = items.filter(t => (t.title + ' ' + t.list + ' ' + t.due + ' ' + (t.description||'')).toLowerCase().includes(query.toLowerCase()));
@@ -502,8 +514,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const newStatus = t.status === 'To Do' ? 'In Progress' : t.status === 'In Progress' ? 'Done' : 'To Do';
     
     try {
-      await tasksService.updateTask(id, { status: newStatus });
+      const updates = { status: newStatus };
+      
+      // If marking as Done, add completion timestamp
+      if (newStatus === 'Done') {
+        updates.completedAt = new Date().toISOString();
+      }
+      // If unmarking as Done, remove completion timestamp
+      else if (t.status === 'Done') {
+        updates.completedAt = null;
+      }
+      
+      await tasksService.updateTask(id, updates);
       t.status = newStatus;
+      if (updates.completedAt !== undefined) {
+        t.completedAt = updates.completedAt;
+      }
       renderTasks();
       if (newStatus === 'Done') {
         showCongrats(t.title || 'Task');
@@ -519,8 +545,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!t) return;
     
     try {
-      await tasksService.updateTask(id, { status: 'Done' });
+      await tasksService.updateTask(id, { 
+        status: 'Done',
+        completedAt: new Date().toISOString()
+      });
       t.status = 'Done';
+      t.completedAt = new Date().toISOString();
       renderTasks();
       showCongrats(t.title || 'Task');
     } catch (error) {
@@ -780,6 +810,52 @@ if (logoutBtn) {
   // --- Search & sort listeners ---
   if (topSearch) topSearch.addEventListener('input', () => renderTasks(null, topSearch.value));
   if (sortSelect) sortSelect.addEventListener('change', () => renderTasks(null, topSearch.value));
+
+  // --- Update completed tasks timestamp ---
+  async function updateOldCompletedTasksTimestamp() {
+    // Add completedAt timestamp to old completed tasks that don't have it
+    const tasksToUpdate = tasks.filter(task => {
+      return task.status === 'Done' && !task.completedAt;
+    });
+    
+    if (tasksToUpdate.length > 0) {
+      console.log(`Adding completedAt timestamp to ${tasksToUpdate.length} old completed task(s)`);
+      
+      for (const task of tasksToUpdate) {
+        try {
+          task.completedAt = new Date().toISOString();
+          await tasksService.updateTask(task.id, { completedAt: task.completedAt });
+          console.log(`Updated timestamp for: ${task.title}`);
+        } catch (error) {
+          console.error(`Error updating task ${task.id}:`, error);
+        }
+      }
+      
+      renderTasks(); // Refresh to hide old completed tasks
+    }
+  }
+
+  function startAutoHideChecking() {
+    // Clear any existing interval
+    if (autoDeleteInterval) {
+      clearInterval(autoDeleteInterval);
+    }
+    
+    // Update old completed tasks immediately
+    updateOldCompletedTasksTimestamp();
+    
+    // Then refresh the view every 10 minutes to hide newly old tasks
+    autoDeleteInterval = setInterval(() => {
+      renderTasks(); // Just re-render to apply the 24-hour filter
+    }, 10 * 60 * 1000);
+  }
+
+  function stopAutoDeleteChecking() {
+    if (autoDeleteInterval) {
+      clearInterval(autoDeleteInterval);
+      autoDeleteInterval = null;
+    }
+  }
 
   // --- Notification System ---
   function loadNotificationSettings() {
@@ -1197,6 +1273,9 @@ if (logoutBtn) {
     startNotificationChecking();
   }
   updateNotificationBadge();
+  
+  // Start auto-hide for completed tasks older than 24 hours (keeps in database, just hides from view)
+  startAutoHideChecking();
 
   // --- Helper: Escape HTML reused above (also used in focus select) ---
   function escapeHtml (s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
