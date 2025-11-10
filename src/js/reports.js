@@ -793,13 +793,13 @@ class Reports {
     }
 
     insightsList.innerHTML = insights.map((insight, index) => `
-      <div class="insight-card flex items-start gap-4 bg-white/20 backdrop-blur-md rounded-2xl p-5 border border-white/30 hover:bg-white/30 transition-all cursor-pointer group">
-        <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition-transform">
+      <div class="insight-card flex items-start gap-4 bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-white/40 hover:bg-white transition-all cursor-pointer group shadow-lg">
+        <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition-transform shadow-md">
           ${insight.icon}
         </div>
         <div class="flex-1">
-          <div class="font-bold text-lg mb-1 text-white">${insight.title}</div>
-          <p class="text-white/90 text-sm leading-relaxed">${insight.message}</p>
+          <div class="font-bold text-lg mb-2 text-gray-900">${insight.title}</div>
+          <p class="text-gray-700 text-sm leading-relaxed">${insight.message}</p>
         </div>
       </div>
     `).join('');
