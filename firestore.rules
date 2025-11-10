@@ -27,6 +27,16 @@ service cloud.firestore {
                                resource.data.userId == request.auth.uid;
     }
     
+    // Focus sessions collection
+    match /focusSessions/{sessionId} {
+      allow read: if request.auth != null && 
+                     resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && 
+                       request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && 
+                               resource.data.userId == request.auth.uid;
+    }
+    
     // Users collection with subcollections
     match /users/{userId} {
       // Allow read/write if the user is authenticated and matches the userId
