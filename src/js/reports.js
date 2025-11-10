@@ -1,6 +1,6 @@
 import { db, auth } from './firebase-config.js';
-import { collection, query, where, orderBy, getDocs, Timestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { collection, query, where, orderBy, getDocs, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 class Reports {
   constructor() {
@@ -64,6 +64,19 @@ class Reports {
       });
     }
 
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        try {
+          await auth.signOut();
+          window.location.href = 'index.html';
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
+      });
+    }
+
     // Update profile email
     if (this.user) {
       const profileEmail = document.getElementById('profileEmail');
@@ -75,9 +88,12 @@ class Reports {
 
   async loadReports() {
     try {
-      if (!this.user) return;
+      if (!this.user) {
+        console.error('No user logged in!');
+        return;
+      }
 
-      console.log(`Loading reports for period: ${this.currentPeriod}`);
+      console.log(`Loading reports for user: ${this.user.uid}, period: ${this.currentPeriod}`);
       const dateRange = this.getDateRange(this.currentPeriod);
       console.log('Date range:', { start: dateRange.start, end: dateRange.end });
       
@@ -127,6 +143,7 @@ class Reports {
 
   async loadTasks(userId, dateRange) {
     try {
+      console.log('Loading tasks for userId:', userId);
       // Load ALL user tasks, we'll filter by completion date later
       const tasksQuery = query(
         collection(db, 'tasks'),
@@ -138,6 +155,7 @@ class Reports {
       
       snapshot.forEach(doc => {
         const data = doc.data();
+        console.log('Task found:', { id: doc.id, title: data.title, completed: data.completed, createdAt: data.createdAt });
         tasks.push({ id: doc.id, ...data });
       });
 
@@ -151,6 +169,7 @@ class Reports {
 
   async loadFocusSessions(userId, dateRange) {
     try {
+      console.log('Loading focus sessions for userId:', userId);
       // Load ALL focus sessions for the user
       const sessionsQuery = query(
         collection(db, 'focusSessions'),
@@ -162,6 +181,7 @@ class Reports {
       
       snapshot.forEach(doc => {
         const data = doc.data();
+        console.log('Focus session found:', { id: doc.id, taskTitle: data.taskTitle, duration: data.duration, completedAt: data.completedAt });
         sessions.push({ id: doc.id, ...data });
       });
 
@@ -174,24 +194,52 @@ class Reports {
   }
 
   displayStats(tasks, focusSessions, dateRange) {
+    console.log('=== DISPLAY STATS DEBUG ===');
+    console.log('Total tasks received:', tasks.length);
+    console.log('Total sessions received:', focusSessions.length);
+    console.log('Date range:', dateRange);
+    
     // Filter tasks and sessions by the selected date range
     const filteredTasks = tasks.filter(task => {
-      if (!task.createdAt) return false;
+      // If today period, don't filter by createdAt, just show all tasks
+      if (this.currentPeriod === 'all') return true;
+      
+      if (!task.createdAt) {
+        console.log('Task without createdAt:', task.title);
+        return true; // Include tasks without timestamp
+      }
       const createdDate = task.createdAt.toDate();
-      return createdDate >= dateRange.start && createdDate <= dateRange.end;
+      const inRange = createdDate >= dateRange.start && createdDate <= dateRange.end;
+      console.log(`Task "${task.title}" created: ${createdDate}, in range: ${inRange}`);
+      return inRange;
     });
     
     const filteredSessions = focusSessions.filter(session => {
-      if (!session.startTime && !session.createdAt) return false;
-      const sessionDate = (session.startTime || session.createdAt).toDate();
-      return sessionDate >= dateRange.start && sessionDate <= dateRange.end;
+      if (this.currentPeriod === 'all') return true;
+      
+      if (!session.completedAt) {
+        console.log('Session without completedAt:', session.taskTitle);
+        return false;
+      }
+      const sessionDate = session.completedAt.toDate();
+      const inRange = sessionDate >= dateRange.start && sessionDate <= dateRange.end;
+      console.log(`Session "${session.taskTitle}" completed: ${sessionDate}, in range: ${inRange}`);
+      return inRange;
     });
+    
+    console.log(`After filtering: ${filteredTasks.length} tasks, ${filteredSessions.length} sessions`);
     
     const completedTasks = filteredTasks.filter(t => t.completed || t.status === 'Done').length;
     const totalTasks = filteredTasks.length;
-    const totalFocusTime = filteredSessions.reduce((acc, s) => acc + (s.timeSpent || 0), 0);
-    const hours = Math.floor(totalFocusTime / 3600);
-    const minutes = Math.floor((totalFocusTime % 3600) / 60);
+    
+    console.log(`Completed tasks: ${completedTasks}/${totalTasks}`);
+    
+    // Focus sessions store duration in minutes
+    const totalFocusMinutes = filteredSessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+    const hours = Math.floor(totalFocusMinutes / 60);
+    const minutes = totalFocusMinutes % 60;
+    
+    console.log(`Stats: ${completedTasks}/${totalTasks} tasks completed, ${totalFocusMinutes} minutes focused`);
     
     const completionRate = totalTasks > 0 
       ? Math.round((completedTasks / totalTasks) * 100) 
@@ -232,9 +280,11 @@ class Reports {
 
   calculateProductivityScore(tasks, focusSessions) {
     const completedTasks = tasks.filter(t => t.completed).length;
-    const completedSessions = focusSessions.filter(s => s.completed).length;
+    const completedSessions = focusSessions.filter(s => s.status === 'completed').length;
+    
+    // Focus sessions store duration in minutes
     const avgFocusTime = focusSessions.length > 0 
-      ? focusSessions.reduce((acc, s) => acc + (s.timeSpent || 0), 0) / focusSessions.length / 60
+      ? focusSessions.reduce((acc, s) => acc + (s.duration || 0), 0) / focusSessions.length
       : 0;
     
     const score = Math.round(
@@ -347,11 +397,15 @@ class Reports {
     const days = this.getDaysInRange(dateRange);
     const sessionData = days.map(day => {
       const sessions = focusSessions.filter(s => {
-        const sessionDate = s.startTime.toDate().toDateString();
+        if (!s.completedAt) return false;
+        const sessionDate = s.completedAt.toDate().toDateString();
         return sessionDate === day.toDateString();
       });
-      return sessions.reduce((acc, s) => acc + (s.timeSpent || 0) / 60, 0);
+      // Focus sessions store duration in minutes
+      return sessions.reduce((acc, s) => acc + (s.duration || 0), 0);
     });
+
+    console.log('Focus sessions chart data:', sessionData);
 
     // If no data, show sample data
     const hasData = sessionData.some(val => val > 0);
@@ -620,10 +674,12 @@ class Reports {
     });
     
     const filteredSessions = focusSessions.filter(s => {
-      if (!s.startTime && !s.createdAt) return false;
-      const date = (s.startTime || s.createdAt).toDate();
+      if (!s.completedAt) return false;
+      const date = s.completedAt.toDate();
       return date >= dateRange.start && date <= dateRange.end;
     });
+    
+    console.log(`Recent activity: ${filteredTasks.length} tasks, ${filteredSessions.length} sessions`);
     
     const activities = [];
     
@@ -642,9 +698,9 @@ class Reports {
     filteredSessions.slice(0, 5).forEach(session => {
       activities.push({
         type: 'focus',
-        title: `Focus session: ${session.taskName || 'Untitled'}`,
-        timestamp: (session.startTime || session.createdAt).toDate(),
-        duration: Math.floor((session.timeSpent || 0) / 60),
+        title: `Focus session: ${session.taskTitle || 'Untitled'}`,
+        timestamp: session.completedAt.toDate(),
+        duration: session.duration || 0,  // Already in minutes
         icon: '⏱️',
         color: 'purple',
         bgColor: 'purple'
@@ -652,6 +708,8 @@ class Reports {
     });
     
     activities.sort((a, b) => b.timestamp - a.timestamp);
+    
+    console.log('Activities to display:', activities);
     
     if (activityCount) {
       activityCount.textContent = `${activities.length} item${activities.length !== 1 ? 's' : ''}`;
@@ -720,12 +778,14 @@ class Reports {
     });
     
     const filteredSessions = focusSessions.filter(s => {
-      if (!s.startTime && !s.createdAt) return false;
-      const date = (s.startTime || s.createdAt).toDate();
+      if (!s.completedAt) return false;
+      const date = s.completedAt.toDate();
       return date >= dateRange.start && date <= dateRange.end;
     });
     
-    const insights = [];
+    console.log(`Generating insights from ${filteredTasks.length} tasks and ${filteredSessions.length} sessions`);
+    
+    let insights = [];
 
     const completedTasks = filteredTasks.filter(t => t.completed || t.status === 'Done').length;
     const completionRate = filteredTasks.length > 0 ? (completedTasks / filteredTasks.length) * 100 : 0;
@@ -738,8 +798,9 @@ class Reports {
       insights.push('💡 Try breaking down larger tasks into smaller, manageable steps to improve completion rate.');
     }
 
+    // Focus sessions store duration in minutes
     const avgFocusTime = filteredSessions.length > 0 
-      ? filteredSessions.reduce((acc, s) => acc + (s.timeSpent || 0), 0) / filteredSessions.length / 60
+      ? filteredSessions.reduce((acc, s) => acc + (s.duration || 0), 0) / filteredSessions.length
       : 0;
 
     if (avgFocusTime > 30) {
