@@ -216,21 +216,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!tasksContainer) return;
     let items = tasks.slice();
 
-    // Hide completed tasks older than 24 hours
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
-    items = items.filter(task => {
-      // If task is completed and has completedAt timestamp
-      if ((task.status === 'Done' || task.completed) && task.completedAt) {
-        const completedDate = task.completedAt.toDate();
-        // Hide if completed more than 24 hours ago
-        return completedDate > twentyFourHoursAgo;
-      }
-      // Show all non-completed tasks
-      return true;
-    });
-
     if (filterList) items = items.filter(t => t.list === filterList);
     if (query) items = items.filter(t => (t.title + ' ' + t.list + ' ' + t.due + ' ' + (t.description||'')).toLowerCase().includes(query.toLowerCase()));
 
