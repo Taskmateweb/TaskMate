@@ -1,6 +1,6 @@
 // src/js/app.js
 import { auth } from './firebase-config.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { tasksService, listsService } from './db.js';
 
@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (profileEmailEl && user.email) {
       profileEmailEl.textContent = user.email;
     }
+
+    // Update profile picture in header
+    updateProfilePicture(user);
 
     // Initialize app with Firebase data
     await initializeApp();
@@ -104,14 +107,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const completedTasksEl = $('completedTasks');
 
   const editModal = $('editModal'); // used by existing edit flow
-  const focusCard = $('focusCard');
-  const focusModal = $('focusModal');
-  const focusTaskSelect = $('focusTaskSelect');
-  const focusMinutes = $('focusMinutes');
-  const focusTimerDisplay = $('focusTimerDisplay');
-  const startFocusBtn = $('startFocusBtn');
-  const stopFocusBtn = $('stopFocusBtn');
-  const closeFocusModal = $('closeFocusModal');
 
   const taskDetailsModal = $('taskDetailsModal');
   const detailTitle = $('detailTitle');
@@ -129,10 +124,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   const profileMenu = $('profileMenu');
   const profileWrap = $('profileWrap');
   const logoutBtn = $('logoutBtn');
+  const congratsOverlay = $('congratsOverlay');
+  
+  // Notification elements
+  const notificationsBtn = $('notificationsBtn');
+  const notificationBadge = $('notificationBadge');
+  const notificationSettingsModal = $('notificationSettingsModal');
+  const closeNotificationSettings = $('closeNotificationSettings');
+  const cancelNotificationSettings = $('cancelNotificationSettings');
+  const saveNotificationSettings = $('saveNotificationSettings');
+  const enableNotifications = $('enableNotifications');
+  const reminderTimeSection = $('reminderTimeSection');
+  const notificationPreview = $('notificationPreview');
+  const previewTime = $('previewTime');
+  const upcomingTasksSection = $('upcomingTasksSection');
+  const upcomingTasksList = $('upcomingTasksList');
+  const upcomingTaskCount = $('upcomingTaskCount');
+  const noUpcomingTasks = $('noUpcomingTasks');
 
   // timer variables for focus
   let timerInterval = null;
   let timerRemaining = 0;
+  
+  // Notification settings
+  let notificationSettings = {
+    enabled: false,
+    reminderMinutes: 1440 // default: 1 day before
+  };
+  let notificationCheckInterval = null;
+  let notifiedTasks = new Set(); // Track which tasks we've already notified about
 
   // Save state to Firebase
   async function saveAll() {
@@ -349,7 +369,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Add Task modal open/close with smooth animation ---
   function openAddTaskModal() {
     if (!addTaskModal || !addTaskContent) return;
+    // Make the overlay a flex container so items-center/justify-center can center the content
     addTaskModal.classList.remove('hidden');
+    addTaskModal.classList.add('flex', 'items-center', 'justify-center');
     // small timeout to allow transition
     setTimeout(() => {
       addTaskContent.classList.remove('scale-95','opacity-0');
@@ -360,7 +382,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!addTaskModal || !addTaskContent) return;
     addTaskContent.classList.remove('scale-100','opacity-100');
     addTaskContent.classList.add('scale-95','opacity-0');
-    setTimeout(() => addTaskModal.classList.add('hidden'), 180);
+    // After the transition, hide the overlay and remove flex centering classes
+    setTimeout(() => {
+      addTaskModal.classList.add('hidden');
+      addTaskModal.classList.remove('flex', 'items-center', 'justify-center');
+    }, 180);
   }
 
   // --- Add Task form handler ---
@@ -396,6 +422,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const due = (newTaskDue && newTaskDue.value) || '';
       const priority = (newTaskPriority && newTaskPriority.value) || 'Medium';
       const description = (newTaskDescription && newTaskDescription.value.trim()) || '';
+
+      // Validate that due date is provided
+      if (!due) {
+        alert('Please select a due date for the task.');
+        if (newTaskDue) newTaskDue.focus();
+        return;
+      }
 
       // If new list entered and not already exist, add to lists
       if (list && !lists.includes(list)) {
@@ -532,6 +565,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       renderTasks();
+      if (newStatus === 'Done') {
+        showCongrats(t.title || 'Task');
+      }
     } catch (error) {
       console.error('Error updating status:', error);
       alert('Failed to update task status');
@@ -556,6 +592,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       showCongrats();
       
       renderTasks();
+      showCongrats(t.title || 'Task');
     } catch (error) {
       console.error('Error marking complete:', error);
       alert('Failed to mark task as complete');
@@ -635,51 +672,109 @@ document.addEventListener('DOMContentLoaded', async () => {
     detailPriority.textContent = t.priority || '—';
     detailStatus.textContent = t.status || '—';
     taskDetailsModal.classList.remove('hidden');
+    taskDetailsModal.classList.add('flex', 'items-center', 'justify-center');
   }
-  if (closeDetail) closeDetail.addEventListener('click', () => taskDetailsModal.classList.add('hidden'));
-  if (taskDetailsModal) taskDetailsModal.addEventListener('click', (e) => { if (e.target === taskDetailsModal) taskDetailsModal.classList.add('hidden'); });
+  function closeTaskDetailsModal() {
+    if (!taskDetailsModal) return;
+    taskDetailsModal.classList.add('hidden');
+    taskDetailsModal.classList.remove('flex', 'items-center', 'justify-center');
+  }
+  if (closeDetail) closeDetail.addEventListener('click', closeTaskDetailsModal);
+  if (taskDetailsModal) taskDetailsModal.addEventListener('click', (e) => { if (e.target === taskDetailsModal) closeTaskDetailsModal(); });
 
   // --- Focus modal handling (small) ---
   function renderFocusTaskOptions() {
     if (!focusTaskSelect) return;
     focusTaskSelect.innerHTML = tasks.map(t => `<option value="${t.id}">${escapeHtml(t.title)} — ${escapeHtml(t.list)}</option>`).join('');
   }
-  if (focusCard && focusModal) {
-    focusCard.addEventListener('click', () => {
-      focusModal.classList.remove('hidden');
-      focusModal.classList.add('flex','items-center','justify-center');
-      renderFocusTaskOptions();
-    });
-  }
-  if (closeFocusModal) closeFocusModal.addEventListener('click', () => { focusModal.classList.add('hidden'); focusModal.classList.remove('flex'); stopTimer(); });
 
-  if (startFocusBtn) {
-    startFocusBtn.addEventListener('click', () => {
-      const minutes = Math.max(1, Number(focusMinutes && focusMinutes.value) || 25);
-      startTimer(minutes * 60);
-      startFocusBtn.classList.add('hidden');
-      stopFocusBtn.classList.remove('hidden');
-    });
+  // --- Congratulations overlay & confetti ---
+  let congratsTimeout = null;
+  function createConfetti(count = 50) {
+    if (!congratsOverlay) return [];
+    const colors = ['#FF6B9D','#FEC84B','#0EA5E9','#8B5CF6','#10B981','#F59E0B','#EC4899','#06B6D4'];
+    const pieces = [];
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span');
+      el.className = 'confetti-piece';
+      const size = Math.floor(Math.random() * 12) + 6;
+      const left = Math.random() * 100;
+      const delay = Math.random() * 0.8;
+      const drift = (Math.random() - 0.5) * 2;
+      el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      el.style.width = size + 'px';
+      el.style.height = Math.floor(size * 1.8) + 'px';
+      el.style.left = left + '%';
+      el.style.setProperty('--drift', drift);
+      el.style.animationDelay = delay + 's';
+      el.style.animationDuration = (2.5 + Math.random() * 1) + 's';
+      congratsOverlay.appendChild(el);
+      pieces.push(el);
+    }
+    return pieces;
   }
-  if (stopFocusBtn) stopFocusBtn.addEventListener('click', () => { stopTimer(); startFocusBtn.classList.remove('hidden'); stopFocusBtn.classList.add('hidden'); });
 
-  function startTimer(seconds) {
-    timerRemaining = seconds;
-    updateTimerDisplay(timerRemaining);
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      timerRemaining--;
-      updateTimerDisplay(timerRemaining);
-      if (timerRemaining <= 0) { clearInterval(timerInterval); focusTimerDisplay.textContent = 'Completed!'; }
-    }, 1000);
+  function createSparkles(count = 15) {
+    if (!congratsOverlay) return [];
+    const sparkles = [];
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span');
+      el.className = 'sparkle';
+      const left = 20 + Math.random() * 60;
+      const top = 20 + Math.random() * 60;
+      const delay = Math.random() * 1.5;
+      el.style.left = left + '%';
+      el.style.top = top + '%';
+      el.style.animationDelay = delay + 's';
+      congratsOverlay.appendChild(el);
+      sparkles.push(el);
+    }
+    return sparkles;
   }
-  function stopTimer() { clearInterval(timerInterval); timerRemaining = 0; updateTimerDisplay(0); }
-  function updateTimerDisplay(sec) {
-    if (!focusTimerDisplay) return;
-    if (sec <= 0) { focusTimerDisplay.textContent = '00:00'; return; }
-    const m = Math.floor(sec/60).toString().padStart(2,'0');
-    const s = (sec%60).toString().padStart(2,'0');
-    focusTimerDisplay.textContent = `${m}:${s}`;
+
+  function showCongrats(taskTitle) {
+    if (!congratsOverlay) {
+      // Fallback: simple browser alert
+      try { alert(`🎉 Congrats — you completed: ${taskTitle}`); } catch (e) {}
+      return;
+    }
+
+    // Clear previous
+    clearTimeout(congratsTimeout);
+    congratsOverlay.innerHTML = '';
+
+    // Build enhanced card
+    const card = document.createElement('div');
+    card.className = 'congrats-card';
+    card.innerHTML = `
+      <div class="congrats-emoji">🎉</div>
+      <h3 class="congrats-title">Awesome!</h3>
+      <p class="congrats-text">You completed: <strong>${escapeHtml(taskTitle)}</strong></p>
+      <p class="congrats-text" style="animation-delay:0.6s;font-size:0.95rem;margin-top:0.5rem;color:#6b7280;">Keep up the great work! 💪</p>
+    `;
+    congratsOverlay.appendChild(card);
+
+    // show overlay with confetti and sparkles
+    congratsOverlay.classList.remove('hidden');
+    congratsOverlay.classList.add('flex','items-center','justify-center');
+    // create confetti pieces and sparkles
+    createConfetti(60);
+    createSparkles(18);
+
+    // Auto-hide after duration
+    congratsTimeout = setTimeout(() => {
+      congratsOverlay.classList.add('hidden');
+      congratsOverlay.classList.remove('flex','items-center','justify-center');
+      congratsOverlay.innerHTML = '';
+    }, 4000);
+
+    // allow click to dismiss
+    congratsOverlay.addEventListener('click', () => {
+      congratsOverlay.classList.add('hidden');
+      congratsOverlay.classList.remove('flex','items-center','justify-center');
+      congratsOverlay.innerHTML = '';
+      clearTimeout(congratsTimeout);
+    }, { once: true });
   }
 
   // --- Profile dropdown (modern) ---
@@ -710,14 +805,422 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    window.location.href = "index.html";
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      window.location.href = "index.html";
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Failed to logout. Please try again.');
+    }
   });
 }
 
   // --- Search & sort listeners ---
   if (topSearch) topSearch.addEventListener('input', () => renderTasks(null, topSearch.value));
   if (sortSelect) sortSelect.addEventListener('change', () => renderTasks(null, topSearch.value));
+
+  // --- Notification System ---
+  function loadNotificationSettings() {
+    try {
+      const saved = localStorage.getItem('taskmate_notification_settings');
+      if (saved) {
+        notificationSettings = JSON.parse(saved);
+      }
+      const notified = localStorage.getItem('taskmate_notified_tasks');
+      if (notified) {
+        notifiedTasks = new Set(JSON.parse(notified));
+      }
+    } catch (e) {
+      console.error('Error loading notification settings:', e);
+    }
+    
+    // Update UI
+    if (enableNotifications) {
+      enableNotifications.checked = notificationSettings.enabled;
+      updateNotificationUI();
+    }
+    
+    // Set the correct radio button
+    const radios = document.querySelectorAll('input[name="reminderTime"]');
+    radios.forEach(radio => {
+      if (parseInt(radio.value) === notificationSettings.reminderMinutes) {
+        radio.checked = true;
+      }
+    });
+  }
+
+  function saveNotificationSettingsToStorage() {
+    try {
+      localStorage.setItem('taskmate_notification_settings', JSON.stringify(notificationSettings));
+      localStorage.setItem('taskmate_notified_tasks', JSON.stringify([...notifiedTasks]));
+    } catch (e) {
+      console.error('Error saving notification settings:', e);
+    }
+  }
+
+  function updateNotificationUI() {
+    if (!reminderTimeSection || !notificationPreview) return;
+    
+    if (notificationSettings.enabled) {
+      reminderTimeSection.classList.remove('opacity-50', 'pointer-events-none');
+      notificationPreview.classList.remove('hidden');
+      
+      // Update preview text
+      const minutes = notificationSettings.reminderMinutes;
+      let timeText = '';
+      if (minutes === 60) timeText = '1 hour';
+      else if (minutes === 360) timeText = '6 hours';
+      else if (minutes === 1440) timeText = '1 day';
+      else if (minutes === 2880) timeText = '2 days';
+      else if (minutes === 4320) timeText = '3 days';
+      else if (minutes === 10080) timeText = '1 week';
+      else timeText = `${minutes} minutes`;
+      
+      if (previewTime) previewTime.textContent = timeText;
+    } else {
+      reminderTimeSection.classList.add('opacity-50', 'pointer-events-none');
+      notificationPreview.classList.add('hidden');
+    }
+  }
+
+  async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+      alert('This browser does not support notifications');
+      return false;
+    }
+
+    if (Notification.permission === 'granted') {
+      return true;
+    }
+
+    if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      return permission === 'granted';
+    }
+
+    return false;
+  }
+
+  function parseTaskDueDate(dueString) {
+    if (!dueString) return null;
+    
+    // Try parsing as ISO date first
+    let date = new Date(dueString);
+    if (!isNaN(date.getTime())) return date;
+    
+    // Handle common date formats
+    const now = new Date();
+    const lower = dueString.toLowerCase().trim();
+    
+    if (lower === 'today') {
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    } else if (lower === 'tomorrow') {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59);
+    } else if (lower.includes('next week')) {
+      const nextWeek = new Date(now);
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      return new Date(nextWeek.getFullYear(), nextWeek.getMonth(), nextWeek.getDate(), 23, 59, 59);
+    }
+    
+    return null;
+  }
+
+  function checkTasksForNotifications() {
+    if (!notificationSettings.enabled) return;
+    if (Notification.permission !== 'granted') return;
+    
+    const now = new Date();
+    const reminderMs = notificationSettings.reminderMinutes * 60 * 1000;
+    
+    tasks.forEach(task => {
+      // Skip if already done or already notified
+      if (task.status === 'Done') return;
+      if (notifiedTasks.has(task.id)) return;
+      
+      const dueDate = parseTaskDueDate(task.due);
+      if (!dueDate) return;
+      
+      const timeUntilDue = dueDate.getTime() - now.getTime();
+      
+      // Check if we should notify (within the reminder window)
+      // Notify if time until due is less than reminder time but more than 0
+      if (timeUntilDue > 0 && timeUntilDue <= reminderMs) {
+        showBrowserNotification(task, dueDate);
+        notifiedTasks.add(task.id);
+        saveNotificationSettingsToStorage();
+      }
+    });
+    
+    updateNotificationBadge();
+  }
+
+  function showBrowserNotification(task, dueDate) {
+    const options = {
+      body: `Due: ${task.due}\nPriority: ${task.priority}\nList: ${task.list}`,
+      icon: 'src/img/notification-icon.png', // You can add a custom icon
+      badge: 'src/img/badge-icon.png',
+      tag: task.id,
+      requireInteraction: false,
+      vibrate: [200, 100, 200]
+    };
+    
+    try {
+      const notification = new Notification(`⏰ Task Due Soon: ${task.title}`, options);
+      
+      notification.onclick = function() {
+        window.focus();
+        openTaskDetailsById(task.id);
+        notification.close();
+      };
+    } catch (e) {
+      console.error('Error showing notification:', e);
+    }
+  }
+
+  function updateNotificationBadge() {
+    if (!notificationBadge) return;
+    
+    const now = new Date();
+    const reminderMs = notificationSettings.reminderMinutes * 60 * 1000;
+    
+    let upcomingCount = 0;
+    tasks.forEach(task => {
+      if (task.status === 'Done') return;
+      const dueDate = parseTaskDueDate(task.due);
+      if (!dueDate) return;
+      
+      const timeUntilDue = dueDate.getTime() - now.getTime();
+      if (timeUntilDue > 0 && timeUntilDue <= reminderMs) {
+        upcomingCount++;
+      }
+    });
+    
+    if (upcomingCount > 0) {
+      notificationBadge.classList.remove('hidden');
+      notificationBadge.textContent = upcomingCount > 9 ? '9+' : upcomingCount;
+      notificationBadge.classList.add('w-5', 'h-5', 'flex', 'items-center', 'justify-center', 'text-xs', 'text-white', 'font-bold');
+    } else {
+      notificationBadge.classList.add('hidden');
+      notificationBadge.classList.remove('w-5', 'h-5', 'flex', 'items-center', 'justify-center', 'text-xs', 'text-white', 'font-bold');
+    }
+  }
+
+  function getUpcomingTasks() {
+    const now = new Date();
+    const reminderMs = notificationSettings.reminderMinutes * 60 * 1000;
+    
+    const upcoming = [];
+    tasks.forEach(task => {
+      if (task.status === 'Done') return;
+      const dueDate = parseTaskDueDate(task.due);
+      if (!dueDate) return;
+      
+      const timeUntilDue = dueDate.getTime() - now.getTime();
+      if (timeUntilDue > 0 && timeUntilDue <= reminderMs) {
+        upcoming.push({
+          ...task,
+          dueDate: dueDate,
+          timeUntilDue: timeUntilDue
+        });
+      }
+    });
+    
+    // Sort by time until due (soonest first)
+    upcoming.sort((a, b) => a.timeUntilDue - b.timeUntilDue);
+    return upcoming;
+  }
+
+  function formatTimeRemaining(ms) {
+    const minutes = Math.floor(ms / (1000 * 60));
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+    return 'less than a minute';
+  }
+
+  function renderUpcomingTasks() {
+    if (!upcomingTasksList || !upcomingTasksSection) return;
+    
+    const upcoming = getUpcomingTasks();
+    
+    if (upcoming.length === 0) {
+      upcomingTasksSection.classList.add('hidden');
+      return;
+    }
+    
+    upcomingTasksSection.classList.remove('hidden');
+    if (upcomingTaskCount) upcomingTaskCount.textContent = upcoming.length;
+    
+    if (noUpcomingTasks) noUpcomingTasks.classList.add('hidden');
+    
+    upcomingTasksList.innerHTML = '';
+    upcoming.forEach(task => {
+      const taskEl = document.createElement('div');
+      taskEl.className = 'p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all cursor-pointer';
+      
+      const priorityColors = {
+        'High': 'bg-red-100 text-red-700 border-red-200',
+        'Medium': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+        'Low': 'bg-green-100 text-green-700 border-green-200'
+      };
+      
+      const wasNotified = notifiedTasks.has(task.id);
+      
+      taskEl.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <h5 class="font-semibold text-gray-900 text-sm truncate">${escapeHtml(task.title)}</h5>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${priorityColors[task.priority] || priorityColors['Medium']}">
+                ${escapeHtml(task.priority)}
+              </span>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-gray-600">
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                ${escapeHtml(task.list)}
+              </span>
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                ${escapeHtml(task.due)}
+              </span>
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-1">
+            <div class="flex items-center gap-1.5 text-xs ${wasNotified ? 'text-green-600' : 'text-orange-600'} font-semibold">
+              ${wasNotified ? 
+                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' :
+                '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+              }
+              <span>${formatTimeRemaining(task.timeUntilDue)}</span>
+            </div>
+            <span class="text-xs ${wasNotified ? 'text-green-600' : 'text-gray-500'}">
+              ${wasNotified ? '✓ Notified' : 'Pending'}
+            </span>
+          </div>
+        </div>
+      `;
+      
+      taskEl.addEventListener('click', () => {
+        closeNotificationSettingsModal();
+        openTaskDetailsById(task.id);
+      });
+      
+      upcomingTasksList.appendChild(taskEl);
+    });
+  }
+
+  function startNotificationChecking() {
+    // Clear any existing interval
+    if (notificationCheckInterval) {
+      clearInterval(notificationCheckInterval);
+    }
+    
+    if (notificationSettings.enabled) {
+      // Check immediately
+      checkTasksForNotifications();
+      
+      // Then check every 5 minutes
+      notificationCheckInterval = setInterval(checkTasksForNotifications, 5 * 60 * 1000);
+    }
+  }
+
+  function stopNotificationChecking() {
+    if (notificationCheckInterval) {
+      clearInterval(notificationCheckInterval);
+      notificationCheckInterval = null;
+    }
+  }
+
+  // Notification settings modal handlers
+  function openNotificationSettingsModal() {
+    if (!notificationSettingsModal) return;
+    notificationSettingsModal.classList.remove('hidden');
+    notificationSettingsModal.classList.add('flex', 'items-center', 'justify-center');
+    // Render the upcoming tasks list when opening modal
+    renderUpcomingTasks();
+  }
+
+  function closeNotificationSettingsModal() {
+    if (!notificationSettingsModal) return;
+    notificationSettingsModal.classList.add('hidden');
+    notificationSettingsModal.classList.remove('flex', 'items-center', 'justify-center');
+  }
+
+  if (notificationsBtn) {
+    notificationsBtn.addEventListener('click', openNotificationSettingsModal);
+  }
+
+  if (closeNotificationSettings) {
+    closeNotificationSettings.addEventListener('click', closeNotificationSettingsModal);
+  }
+
+  if (cancelNotificationSettings) {
+    cancelNotificationSettings.addEventListener('click', closeNotificationSettingsModal);
+  }
+
+  if (notificationSettingsModal) {
+    notificationSettingsModal.addEventListener('click', (e) => {
+      if (e.target === notificationSettingsModal) closeNotificationSettingsModal();
+    });
+  }
+
+  if (enableNotifications) {
+    enableNotifications.addEventListener('change', (e) => {
+      notificationSettings.enabled = e.target.checked;
+      updateNotificationUI();
+    });
+  }
+
+  // Listen to reminder time changes
+  document.querySelectorAll('input[name="reminderTime"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      notificationSettings.reminderMinutes = parseInt(e.target.value);
+      updateNotificationUI();
+      // Update the upcoming tasks list when reminder time changes
+      renderUpcomingTasks();
+    });
+  });
+
+  if (saveNotificationSettings) {
+    saveNotificationSettings.addEventListener('click', async () => {
+      // Request permission if enabling notifications
+      if (notificationSettings.enabled) {
+        const granted = await requestNotificationPermission();
+        if (!granted) {
+          alert('Please enable notifications in your browser settings to receive task reminders.');
+          notificationSettings.enabled = false;
+          if (enableNotifications) enableNotifications.checked = false;
+          updateNotificationUI();
+          return;
+        }
+      }
+      
+      saveNotificationSettingsToStorage();
+      
+      if (notificationSettings.enabled) {
+        startNotificationChecking();
+      } else {
+        stopNotificationChecking();
+        updateNotificationBadge();
+      }
+      
+      closeNotificationSettingsModal();
+      
+      // Show success message
+      const successMsg = document.createElement('div');
+      successMsg.className = 'fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 animate-slide-down';
+      successMsg.innerHTML = '✓ Notification settings saved!';
+      document.body.appendChild(successMsg);
+      setTimeout(() => successMsg.remove(), 3000);
+    });
+  }
 
 
   // Logout button click redirect
@@ -726,9 +1229,44 @@ if (logoutBtn) {
   // --- Initialize UI ---
   renderLists();
   renderTasks();
+  
+  // Initialize notification system
+  loadNotificationSettings();
+  if (notificationSettings.enabled) {
+    startNotificationChecking();
+  }
+  updateNotificationBadge();
 
   // --- Helper: Escape HTML reused above (also used in focus select) ---
   function escapeHtml (s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   } // End of initializeApp function
 });
+
+// Update profile picture in header
+function updateProfilePicture(user) {
+  const profileBtn = document.getElementById('profileBtn');
+  if (!profileBtn) return;
+
+  const iconContainer = profileBtn.querySelector('.h-8');
+  if (!iconContainer) return;
+
+  if (user.photoURL) {
+    // Show actual profile picture
+    iconContainer.innerHTML = `<img src="${user.photoURL}" alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-100" />`;
+  } else if (user.displayName) {
+    // Show initials
+    const initials = getUserInitials(user.displayName);
+    iconContainer.innerHTML = `<span class="text-sm font-semibold text-white">${initials}</span>`;
+  }
+}
+
+// Get user initials
+function getUserInitials(name) {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+}
