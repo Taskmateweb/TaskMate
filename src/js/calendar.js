@@ -76,6 +76,38 @@ document.addEventListener('DOMContentLoaded', () => {
       profileBtn.setAttribute('aria-expanded', 'false');
     });
   }
+
+  // Notifications Panel
+  const notificationsBtn = document.getElementById('notificationsBtn');
+  const notificationsPanel = document.getElementById('notificationsPanel');
+  const closeNotificationsBtn = document.getElementById('closeNotificationsBtn');
+
+  if (notificationsBtn && notificationsPanel) {
+    console.log('Attaching notification button listener');
+    notificationsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      console.log('Notification button clicked');
+      notificationsPanel.classList.toggle('hidden');
+    });
+  } else {
+    console.error('Notification button or panel not found!');
+  }
+
+  if (closeNotificationsBtn) {
+    closeNotificationsBtn.addEventListener('click', () => {
+      console.log('Close notification button clicked');
+      notificationsPanel.classList.add('hidden');
+    });
+  }
+
+  // Close panel when clicking outside
+  document.addEventListener('click', (e) => {
+    if (notificationsPanel && !notificationsPanel.classList.contains('hidden')) {
+      if (!notificationsBtn.contains(e.target) && !notificationsPanel.contains(e.target)) {
+        notificationsPanel.classList.add('hidden');
+      }
+    }
+  });
 });
 
 async function initializeCalendar(userId) {
@@ -135,11 +167,90 @@ async function initializeCalendar(userId) {
       
       renderCalendar();
       renderUpcomingEvents();
+      loadNotifications();
     } catch (error) {
       console.error('Error loading events:', error);
       events = [];
       renderCalendar();
     }
+  }
+
+  // Load and display notifications for upcoming events
+  async function loadNotifications() {
+    try {
+      const notificationsList = $('notificationsList');
+      const notificationBadge = document.querySelector('#notificationsBtn .bg-accent-500');
+      
+      if (!notificationsList) return;
+
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(23, 59, 59, 999);
+
+      // Filter events that are upcoming (today or tomorrow)
+      const upcomingNotifications = events.filter(event => {
+        const eventDate = new Date(event.startDate);
+        return eventDate >= now && eventDate <= tomorrow;
+      }).sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+      // Update notification badge
+      if (notificationBadge) {
+        if (upcomingNotifications.length > 0) {
+          notificationBadge.classList.remove('hidden');
+        } else {
+          notificationBadge.classList.add('hidden');
+        }
+      }
+
+      // Render notifications
+      if (upcomingNotifications.length === 0) {
+        notificationsList.innerHTML = '<li class="p-6 text-center text-gray-500">No upcoming events.</li>';
+        return;
+      }
+
+      notificationsList.innerHTML = upcomingNotifications.map(event => {
+        const eventDate = new Date(event.startDate);
+        const timeStr = eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        const dateStr = eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        const isToday = eventDate.toDateString() === now.toDateString();
+        const timeLabel = isToday ? 'Today' : 'Tomorrow';
+        
+        const colors = categoryColors[event.category] || categoryColors.other;
+        
+        return `
+          <li class="p-4 hover:bg-gray-50 cursor-pointer transition-colors">
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-full ${colors.bg} flex items-center justify-center">
+                <svg class="w-5 h-5 ${colors.text}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-gray-900">${escapeHtml(event.title)}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  <span class="${colors.text} font-medium">${timeLabel}</span> at ${timeStr}
+                </p>
+                ${event.description ? `<p class="text-xs text-gray-600 mt-1 line-clamp-1">${escapeHtml(event.description)}</p>` : ''}
+              </div>
+              <span class="flex-shrink-0 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colors.bg} ${colors.text}">
+                ${event.category}
+              </span>
+            </div>
+          </li>
+        `;
+      }).join('');
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  }
+
+  // Helper function to escape HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   // Render calendar
