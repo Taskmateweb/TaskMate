@@ -378,29 +378,20 @@ async function loadRecentSessions() {
       return;
     }
 
+    // Get start of today (00:00:00)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayStartTime = todayStart.getTime();
+
     const sessionsRef = collection(db, 'focusSessions');
     
-    // Try with orderBy first
-    let q = query(
+    // Simple query - just get user's sessions, filter in JavaScript
+    const q = query(
       sessionsRef,
-      where('userId', '==', currentUser.uid),
-      orderBy('completedAt', 'desc'),
-      limit(10)
+      where('userId', '==', currentUser.uid)
     );
     
-    let querySnapshot;
-    try {
-      querySnapshot = await getDocs(q);
-    } catch (indexError) {
-      // If index error, try without orderBy
-      console.log('Index not ready, fetching without orderBy:', indexError.message);
-      q = query(
-        sessionsRef,
-        where('userId', '==', currentUser.uid),
-        limit(10)
-      );
-      querySnapshot = await getDocs(q);
-    }
+    const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
       console.log('No sessions found for user:', currentUser.uid);
@@ -409,17 +400,36 @@ async function loadRecentSessions() {
       return;
     }
 
-    console.log('Found sessions:', querySnapshot.size);
-    emptyState.classList.add('hidden');
+    console.log('Total sessions found:', querySnapshot.size);
     
     const sessions = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      console.log('Session data:', data);
-      sessions.push({ id: doc.id, ...data });
+      
+      // Filter for today's sessions only
+      if (data.completedAt) {
+        const completedTime = data.completedAt.toDate ? data.completedAt.toDate().getTime() : data.completedAt.seconds * 1000;
+        
+        // Only include if completed today
+        if (completedTime >= todayStartTime) {
+          console.log('Today\'s session data:', data);
+          sessions.push({ id: doc.id, ...data });
+        }
+      }
     });
 
-    // Sort manually if we couldn't use orderBy
+    // Check if we have any sessions for today
+    if (sessions.length === 0) {
+      console.log('No sessions completed today');
+      sessionsList.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    console.log('Found today\'s sessions:', sessions.length);
+    emptyState.classList.add('hidden');
+
+    // Sort by most recent first
     sessions.sort((a, b) => {
       const timeA = a.completedAt?.toDate?.() || new Date(0);
       const timeB = b.completedAt?.toDate?.() || new Date(0);

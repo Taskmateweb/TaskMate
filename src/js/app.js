@@ -287,6 +287,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!tasksContainer) return;
     let items = tasks.slice();
 
+    // Filter out completed tasks older than 24 hours
+    const now = Date.now();
+    const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    
+    items = items.filter(task => {
+      // If task is not completed, always show it
+      if (task.status !== 'Done' && !task.completed) {
+        return true;
+      }
+      
+      // If task is completed, check if it has completedAt timestamp
+      if (task.completedAt) {
+        // Convert Firestore Timestamp to milliseconds
+        const completedTime = task.completedAt.toMillis ? task.completedAt.toMillis() : task.completedAt.seconds * 1000;
+        const timeSinceCompletion = now - completedTime;
+        
+        // Only show if completed within last 24 hours
+        return timeSinceCompletion <= twentyFourHours;
+      }
+      
+      // If no completedAt timestamp, hide it (shouldn't happen after migration)
+      return false;
+    });
+
     if (filterList) items = items.filter(t => t.list === filterList);
     if (query) items = items.filter(t => (t.title + ' ' + t.list + ' ' + t.due + ' ' + (t.description||'')).toLowerCase().includes(query.toLowerCase()));
 
