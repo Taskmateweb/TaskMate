@@ -6,7 +6,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { 
   doc, 
@@ -126,6 +127,114 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = 'Sign In';
       }
     });
+
+    // ==================== FORGOT PASSWORD FUNCTIONALITY ====================
+    const forgotPasswordLink = $('forgotPasswordLink');
+    const forgotPasswordModal = $('forgotPasswordModal');
+    const closeForgotModal = $('closeForgotModal');
+    const cancelReset = $('cancelReset');
+    const forgotPasswordForm = $('forgotPasswordForm');
+
+    // Open forgot password modal
+    if (forgotPasswordLink && forgotPasswordModal) {
+      forgotPasswordLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        forgotPasswordModal.classList.remove('hidden');
+        $('resetEmail').focus();
+      });
+    }
+
+    // Close modal handlers
+    const closeForgotPasswordModal = () => {
+      if (forgotPasswordModal) {
+        forgotPasswordModal.classList.add('hidden');
+        // Clear form and messages
+        if (forgotPasswordForm) forgotPasswordForm.reset();
+        if ($('resetSuccess')) $('resetSuccess').classList.add('hidden');
+        if ($('resetError')) $('resetError').classList.add('hidden');
+      }
+    };
+
+    if (closeForgotModal) {
+      closeForgotModal.addEventListener('click', closeForgotPasswordModal);
+    }
+
+    if (cancelReset) {
+      cancelReset.addEventListener('click', closeForgotPasswordModal);
+    }
+
+    // Close modal when clicking outside
+    if (forgotPasswordModal) {
+      forgotPasswordModal.addEventListener('click', (e) => {
+        if (e.target === forgotPasswordModal) {
+          closeForgotPasswordModal();
+        }
+      });
+    }
+
+    // Handle forgot password form submission
+    if (forgotPasswordForm) {
+      forgotPasswordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = $('resetEmail').value.trim();
+        const submitBtn = forgotPasswordForm.querySelector('button[type="submit"]');
+
+        // Validate email
+        if (!validateEmail(email)) {
+          showError('resetError', 'resetErrorText', 'Please enter a valid email address');
+          return;
+        }
+
+        // Hide previous messages
+        if ($('resetError')) $('resetError').classList.add('hidden');
+        if ($('resetSuccess')) $('resetSuccess').classList.add('hidden');
+
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+
+        try {
+          // Send password reset email
+          await sendPasswordResetEmail(auth, email);
+          
+          // Show success message
+          showSuccess('resetSuccess', 'resetSuccessText', 'Password reset email sent! Check your inbox.');
+          
+          // Clear form
+          forgotPasswordForm.reset();
+
+          // Close modal after 3 seconds
+          setTimeout(() => {
+            closeForgotPasswordModal();
+          }, 3000);
+          
+        } catch (error) {
+          console.error('Password reset error:', error);
+          
+          let errorMessage = 'Failed to send reset email';
+          switch (error.code) {
+            case 'auth/user-not-found':
+              errorMessage = 'No account found with this email address';
+              break;
+            case 'auth/invalid-email':
+              errorMessage = 'Invalid email address';
+              break;
+            case 'auth/too-many-requests':
+              errorMessage = 'Too many requests. Please try again later';
+              break;
+            default:
+              errorMessage = error.message;
+          }
+          
+          showError('resetError', 'resetErrorText', errorMessage);
+        } finally {
+          // Re-enable submit button
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send Reset Link';
+        }
+      });
+    }
   }
 
   // ==================== REGISTER PAGE ====================
