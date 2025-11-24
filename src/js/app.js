@@ -526,8 +526,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           status: 'To Do', 
           description 
         });
-        tasks.unshift(newTask);
-        renderTasks();
+        // Don't manually add to tasks array - real-time listener will handle it
+        // tasks.unshift(newTask);
+        // renderTasks();
         closeAddTaskModal();
         addTaskForm.reset();
         console.log('Task added:', newTask);
@@ -630,16 +631,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       await tasksService.updateTask(id, updateData);
-      t.status = newStatus;
-      t.completed = updateData.completed;
-      t.completedAt = updateData.completedAt;
+      // Don't manually update - real-time listener will handle it
+      // t.status = newStatus;
+      // t.completed = updateData.completed;
+      // t.completedAt = updateData.completedAt;
+      // renderTasks();
       
       // Show congratulations when marking as Done
-      if (newStatus === 'Done') {
-        showCongrats();
-      }
-      
-      renderTasks();
       if (newStatus === 'Done') {
         showCongrats(t.title || 'Task');
       }
@@ -659,14 +657,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         completed: true,
         completedAt: Timestamp.now()
       });
-      t.status = 'Done';
-      t.completed = true;
-      t.completedAt = Timestamp.now();
+      // Don't manually update - real-time listener will handle it
+      // t.status = 'Done';
+      // t.completed = true;
+      // t.completedAt = Timestamp.now();
+      // renderTasks();
       
       // Show congratulations
-      showCongrats();
-      
-      renderTasks();
       showCongrats(t.title || 'Task');
     } catch (error) {
       console.error('Error marking complete:', error);
@@ -679,8 +676,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     try {
       await tasksService.deleteTask(id);
-      tasks = tasks.filter(x => x.id !== id);
-      renderTasks();
+      // Don't manually filter - real-time listener will handle it
+      // tasks = tasks.filter(x => x.id !== id);
+      // renderTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
       alert('Failed to delete task');
@@ -725,8 +723,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       try {
         await tasksService.updateTask(id, updates);
-        Object.assign(t, updates);
-        renderTasks();
+        // Don't manually update - real-time listener will handle it
+        // Object.assign(t, updates);
+        // renderTasks();
         if (editModal) { editModal.classList.add('hidden'); editModal.classList.remove('flex'); }
       } catch (error) {
         console.error('Error updating task:', error);
