@@ -85,6 +85,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         "Fitness","Finance","Home","Projects","Events","Goals","Habits","Routines"];
     }
 
+    // --- Setup real-time listener for tasks ---
+    let unsubscribe = null;
+    try {
+      console.log('🔥 Setting up real-time listener...');
+      unsubscribe = tasksService.listenToTasks((changes) => {
+        console.log('📡 Real-time update received:', changes);
+
+        // Handle added tasks
+        changes.added.forEach(task => {
+          const existingIndex = tasks.findIndex(t => t.id === task.id);
+          if (existingIndex === -1) {
+            tasks.unshift(task); // Add to beginning
+            console.log('✅ Task added:', task.title);
+          }
+        });
+
+        // Handle modified tasks
+        changes.modified.forEach(task => {
+          const index = tasks.findIndex(t => t.id === task.id);
+          if (index !== -1) {
+            tasks[index] = task;
+            console.log('🔄 Task updated:', task.title);
+          }
+        });
+
+        // Handle removed tasks
+        changes.removed.forEach(task => {
+          const index = tasks.findIndex(t => t.id === task.id);
+          if (index !== -1) {
+            tasks.splice(index, 1);
+            console.log('🗑️ Task removed:', task.title);
+          }
+        });
+
+        // Re-render UI with updated tasks
+        renderTasks();
+      });
+
+      console.log('✅ Real-time listener active!');
+    } catch (error) {
+      console.error('❌ Error setting up real-time listener:', error);
+    }
+
+    // Clean up listener on page unload
+    window.addEventListener('beforeunload', () => {
+      if (unsubscribe) {
+        unsubscribe();
+        console.log('🔌 Real-time listener disconnected');
+      }
+    });
+
     // --- Short helpers to get DOM nodes ---
   const $ = id => document.getElementById(id);
   const tasksContainer = $('tasksContainer');

@@ -13,13 +13,14 @@ import {
   query, 
   where,
   orderBy,
-  serverTimestamp 
+  serverTimestamp,
+  onSnapshot 
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // ==================== TASKS OPERATIONS ====================
 
 export const tasksService = {
-  // Get all tasks for current user
+  // Get all tasks for current user (one-time read)
   async getAllTasks() {
     try {
       const user = auth.currentUser;
@@ -35,6 +36,48 @@ export const tasksService = {
       }));
     } catch (error) {
       console.error('Error getting tasks:', error);
+      throw error;
+    }
+  },
+
+  // Listen to real-time task updates
+  listenToTasks(callback) {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('User not authenticated');
+
+      const tasksRef = collection(db, 'tasks');
+      const q = query(tasksRef, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+      
+      // Return unsubscribe function
+      return onSnapshot(q, (snapshot) => {
+        const changes = {
+          added: [],
+          modified: [],
+          removed: []
+        };
+
+        snapshot.docChanges().forEach((change) => {
+          const task = {
+            id: change.doc.id,
+            ...change.doc.data()
+          };
+
+          if (change.type === 'added') {
+            changes.added.push(task);
+          } else if (change.type === 'modified') {
+            changes.modified.push(task);
+          } else if (change.type === 'removed') {
+            changes.removed.push(task);
+          }
+        });
+
+        callback(changes);
+      }, (error) => {
+        console.error('Error listening to tasks:', error);
+      });
+    } catch (error) {
+      console.error('Error setting up task listener:', error);
       throw error;
     }
   },
